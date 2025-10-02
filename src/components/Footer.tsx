@@ -137,7 +137,7 @@ export default function Footer() {
 
           {/* Kids */}
           <div className="lg:col-span-1">
-            <h3 className="text-white font-medium mb-4">Kids'</h3>
+            <h3 className="text-white font-medium mb-4">Kids&apos;</h3>
             <ul className="space-y-2">
               <li>
                 <a
@@ -152,7 +152,7 @@ export default function Footer() {
                   href="#"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
-                  Kids' Shoes
+                  Kids&apos; Shoes
                 </a>
               </li>
               <li>
@@ -160,7 +160,7 @@ export default function Footer() {
                   href="#"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
-                  Kids' Jordan Shoes
+                  Kids&apos; Jordan Shoes
                 </a>
               </li>
               <li>
@@ -168,7 +168,7 @@ export default function Footer() {
                   href="#"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
-                  Kids' Basketball Shoes
+                  Kids&apos; Basketball Shoes
                 </a>
               </li>
             </ul>

@@ -22,7 +22,7 @@ export default function Navbar() {
                 alt="Nike Logo"
                 width={32}
                 height={32}
-                className="w-full h-full"
+                className="w-full h-full filter brightness-0"
               />
             </div>
           </div>

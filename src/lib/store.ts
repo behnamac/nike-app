@@ -26,7 +26,7 @@ interface ProductStore {
   fetchProducts: () => Promise<void>;
 }
 
-export const useProductStore = create<ProductStore>((set, get) => ({
+export const useProductStore = create<ProductStore>((set) => ({
   products: [],
   loading: false,
   error: null,
