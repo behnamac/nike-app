@@ -4,6 +4,7 @@ import { Eye, EyeOff } from "lucide-react";
 interface FormInputProps {
   label: string;
   type?: "text" | "email" | "password";
+  name?: string;
   placeholder?: string;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -14,6 +15,7 @@ interface FormInputProps {
 export default function FormInput({
   label,
   type = "text",
+  name,
   placeholder,
   value,
   onChange,
@@ -32,6 +34,7 @@ export default function FormInput({
       <div className="relative">
         <input
           type={isPassword && showPassword ? "text" : type}
+          name={name}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
