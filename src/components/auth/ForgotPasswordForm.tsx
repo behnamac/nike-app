@@ -44,24 +44,24 @@ export default function ForgotPasswordForm() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center  py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
-              <FaEnvelope className="h-6 w-6 text-green-600" />
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">
+              <FaEnvelope className="h-6 w-6 text-gray-600" />
             </div>
             <h2 className="mt-6 text-3xl font-bold text-gray-900">
               Check Your Email
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              We've sent a password reset link to{" "}
+              We&apos;ve sent a password reset link to{" "}
               <span className="font-medium text-gray-900">{email}</span>
             </p>
           </div>
 
           <div className="space-y-4">
             <p className="text-sm text-gray-600 text-center">
-              Didn't receive the email? Check your spam folder or{" "}
+              Didn&apos;t receive the email? Check your spam folder or{" "}
               <button
                 onClick={() => setIsSubmitted(false)}
                 className="font-medium text-black hover:underline"
@@ -93,8 +93,8 @@ export default function ForgotPasswordForm() {
             Forgot Password?
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            No worries! Enter your email address and we'll send you a link to
-            reset your password.
+            No worries! Enter your email address and we&apos;ll send you a link
+            to reset your password.
           </p>
         </div>
 

@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { FaArrowLeft, FaCheck } from "react-icons/fa";
 import FormInput from "./FormInput";
+import { resetPassword } from "@/lib/auth/actions";
 
 export default function ResetPasswordForm() {
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     password: "",
     confirmPassword: "",
@@ -13,6 +16,16 @@ export default function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const tokenParam = searchParams.get("token");
+    if (!tokenParam) {
+      setError("Invalid reset link. Please request a new password reset.");
+    } else {
+      setToken(tokenParam);
+    }
+  }, [searchParams]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -27,33 +40,27 @@ export default function ResetPasswordForm() {
     setIsLoading(true);
     setError("");
 
-    // Validate passwords match
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
-
-    // Validate password strength
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
+    if (!token) {
+      setError("Invalid reset link. Please request a new password reset.");
       setIsLoading(false);
       return;
     }
 
     try {
-      // TODO: Implement actual password reset logic
-      // 1. Validate reset token
-      // 2. Hash new password
-      // 3. Update user password
-      // 4. Invalidate reset token
+      const formDataObj = new FormData();
+      formDataObj.append("token", token);
+      formDataObj.append("password", formData.password);
+      formDataObj.append("confirmPassword", formData.confirmPassword);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const result = await resetPassword(formDataObj);
 
-      setIsSubmitted(true);
+      if (result.success) {
+        setIsSubmitted(true);
+      } else {
+        setError(result.error || "Failed to reset password. Please try again.");
+      }
     } catch {
-      setError("Failed to reset password. Please try again.");
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }

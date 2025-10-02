@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import FormInput from "./FormInput";
 import SocialButton from "./SocialButton";
 import { signIn, signUp } from "@/lib/auth/actions";
@@ -19,7 +18,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({

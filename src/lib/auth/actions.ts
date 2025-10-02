@@ -4,10 +4,18 @@ import { z } from "zod";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { user, session, account, guest, type User } from "@/lib/db/schema";
+import {
+  user,
+  session,
+  account,
+  guest,
+  verification,
+  type User,
+} from "@/lib/db/schema";
 import { eq, and, gt } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
+import { sendPasswordResetEmailSimple } from "@/lib/email";
 
 // Zod validation schemas
 const signUpSchema = z.object({
@@ -447,13 +455,27 @@ export async function forgotPassword(
       };
     }
 
-    // TODO: Implement actual password reset logic
-    // 1. Generate reset token
-    // 2. Store token in verification table
-    // 3. Send email with reset link
-    // 4. Set expiration time
+    // Generate reset token
+    const resetToken = uuidv4();
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    // For now, just return success
+    // Store token in verification table
+    await db.insert(verification).values({
+      identifier: email,
+      value: resetToken,
+      expiresAt,
+    });
+
+    // Send email with reset link
+    const emailResult = await sendPasswordResetEmailSimple(email, resetToken);
+
+    if (!emailResult.success) {
+      return {
+        success: false,
+        error: "Failed to send reset email. Please try again later.",
+      };
+    }
+
     return {
       success: true,
       data: null,
@@ -463,6 +485,99 @@ export async function forgotPassword(
     return {
       success: false,
       error: "Failed to process password reset request",
+    };
+  }
+}
+
+// Reset Password Action
+export async function resetPassword(
+  formData: FormData
+): Promise<ActionResult<null>> {
+  try {
+    const token = formData.get("token") as string;
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+
+    if (!token || !password || !confirmPassword) {
+      return {
+        success: false,
+        error: "All fields are required",
+      };
+    }
+
+    if (password !== confirmPassword) {
+      return {
+        success: false,
+        error: "Passwords do not match",
+      };
+    }
+
+    if (password.length < 8) {
+      return {
+        success: false,
+        error: "Password must be at least 8 characters long",
+      };
+    }
+
+    // Find valid reset token
+    const [resetRecord] = await db
+      .select()
+      .from(verification)
+      .where(
+        and(
+          eq(verification.value, token),
+          gt(verification.expiresAt, new Date())
+        )
+      )
+      .limit(1);
+
+    if (!resetRecord) {
+      return {
+        success: false,
+        error: "Invalid or expired reset token",
+      };
+    }
+
+    // Find user by email
+    const [userRecord] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, resetRecord.identifier))
+      .limit(1);
+
+    if (!userRecord) {
+      return {
+        success: false,
+        error: "User not found",
+      };
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Update user password in account table
+    await db
+      .update(account)
+      .set({ password: hashedPassword })
+      .where(
+        and(
+          eq(account.userId, userRecord.id),
+          eq(account.providerId, "credentials")
+        )
+      );
+
+    // Delete the used reset token
+    await db.delete(verification).where(eq(verification.id, resetRecord.id));
+
+    return {
+      success: true,
+      data: null,
+    };
+  } catch (error) {
+    console.error("Reset password error:", error);
+    return {
+      success: false,
+      error: "Failed to reset password",
     };
   }
 }

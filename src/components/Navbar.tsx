@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { FaUser, FaSignOutAlt } from "react-icons/fa";
 import { useAuth } from "@/lib/auth/context";
-import { signOut } from "@/lib/auth/actions";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
