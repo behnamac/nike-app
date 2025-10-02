@@ -409,6 +409,64 @@ export async function getCurrentUser(): Promise<
   }
 }
 
+// Forgot Password Action
+export async function forgotPassword(
+  formData: FormData
+): Promise<ActionResult<null>> {
+  try {
+    const email = formData.get("email") as string;
+
+    if (!email) {
+      return {
+        success: false,
+        error: "Email is required",
+      };
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return {
+        success: false,
+        error: "Please enter a valid email address",
+      };
+    }
+
+    // Check if user exists
+    const [existingUser] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, email))
+      .limit(1);
+
+    if (!existingUser) {
+      // Don't reveal if user exists or not for security
+      return {
+        success: true,
+        data: null,
+      };
+    }
+
+    // TODO: Implement actual password reset logic
+    // 1. Generate reset token
+    // 2. Store token in verification table
+    // 3. Send email with reset link
+    // 4. Set expiration time
+
+    // For now, just return success
+    return {
+      success: true,
+      data: null,
+    };
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    return {
+      success: false,
+      error: "Failed to process password reset request",
+    };
+  }
+}
+
 // Utility function to check if user is authenticated
 export async function requireAuth(): Promise<string> {
   const result = await getCurrentUser();
