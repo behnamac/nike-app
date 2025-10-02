@@ -3,13 +3,21 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FaUser } from "react-icons/fa";
+import { FaUser, FaSignOutAlt } from "react-icons/fa";
+import { useAuth } from "@/lib/auth/context";
+import { signOut } from "@/lib/auth/actions";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, loading, signOut: authSignOut } = useAuth();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleSignOut = async () => {
+    await authSignOut();
+    // The auth context will automatically update the UI
   };
 
   return (
@@ -79,13 +87,33 @@ export default function Navbar() {
             >
               My Cart (2)
             </a>
-            <Link
-              href="/sign-in"
-              className="flex items-center space-x-2 text-gray-900 hover:text-gray-700 text-sm font-medium transition-colors"
-            >
-              <FaUser className="w-4 h-4" />
-              <span>Sign In</span>
-            </Link>
+            {loading ? (
+              <div className="flex items-center space-x-2 text-gray-500 text-sm font-medium">
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                <span>Loading...</span>
+              </div>
+            ) : user ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-gray-700 text-sm font-medium">
+                  Welcome, {user.name || user.email}
+                </span>
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center space-x-2 text-gray-900 hover:text-gray-700 text-sm font-medium transition-colors"
+                >
+                  <FaSignOutAlt className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/sign-in"
+                className="flex items-center space-x-2 text-gray-900 hover:text-gray-700 text-sm font-medium transition-colors"
+              >
+                <FaUser className="w-4 h-4" />
+                <span>Sign In</span>
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -177,13 +205,33 @@ export default function Navbar() {
             >
               My Cart (2)
             </a>
-            <Link
-              href="/sign-in"
-              className="flex items-center space-x-2 text-gray-900 hover:text-gray-700 block px-3 py-2 text-base font-medium"
-            >
-              <FaUser className="w-4 h-4" />
-              <span>Sign In</span>
-            </Link>
+            {loading ? (
+              <div className="flex items-center space-x-2 text-gray-500 px-3 py-2 text-base font-medium">
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                <span>Loading...</span>
+              </div>
+            ) : user ? (
+              <div className="space-y-2">
+                <div className="text-gray-700 px-3 py-2 text-base font-medium">
+                  Welcome, {user.name || user.email}
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center space-x-2 text-gray-900 hover:text-gray-700 w-full px-3 py-2 text-base font-medium"
+                >
+                  <FaSignOutAlt className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/sign-in"
+                className="flex items-center space-x-2 text-gray-900 hover:text-gray-700 block px-3 py-2 text-base font-medium"
+              >
+                <FaUser className="w-4 h-4" />
+                <span>Sign In</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>

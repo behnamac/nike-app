@@ -49,8 +49,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
           : await signIn(formDataObj);
 
       if (result.success) {
-        router.push("/");
-        router.refresh();
+        // Refresh the page to update the navbar
+        window.location.href = "/";
       } else {
         setError(result.error || "Authentication failed");
       }

@@ -46,8 +46,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       const { signOut: signOutAction } = await import("./actions");
-      await signOutAction();
-      setUser(null);
+      const result = await signOutAction();
+      if (result.success) {
+        setUser(null);
+        // Refresh the page to clear any cached state
+        window.location.reload();
+      }
     } catch (error) {
       console.error("Sign out failed:", error);
     }
