@@ -1,5 +1,11 @@
-import { pgTable, uuid, numeric, timestamp, pgEnum } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import {
+  pgTable,
+  uuid,
+  numeric,
+  timestamp,
+  pgEnum,
+  integer,
+} from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 // Enum for order status
@@ -8,57 +14,40 @@ export const orderStatusEnum = pgEnum("order_status", [
   "paid",
   "shipped",
   "delivered",
-  "cancelled"
+  "cancelled",
 ]);
 
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull(),
   status: orderStatusEnum("status").notNull().default("pending"),
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
-  shippingAddressId: uuid("shipping_address_id").notNull().references(() => addresses.id),
-  billingAddressId: uuid("billing_address_id").notNull().references(() => addresses.id),
+  shippingAddressId: uuid("shipping_address_id").notNull(),
+  billingAddressId: uuid("billing_address_id").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const orderItems = pgTable("order_items", {
   id: uuid("id").primaryKey().defaultRandom(),
-  orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
-  productVariantId: uuid("product_variant_id").notNull().references(() => productVariants.id),
+  orderId: uuid("order_id").notNull(),
+  productVariantId: uuid("product_variant_id").notNull(),
   quantity: integer("quantity").notNull(),
-  priceAtPurchase: numeric("price_at_purchase", { precision: 10, scale: 2 }).notNull(),
+  priceAtPurchase: numeric("price_at_purchase", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
 });
 
-export const ordersRelations = relations(orders, ({ one, many }) => ({
-  user: one(user, {
-    fields: [orders.userId],
-    references: [user.id],
-  }),
-  shippingAddress: one(addresses, {
-    fields: [orders.shippingAddressId],
-    references: [addresses.id],
-  }),
-  billingAddress: one(addresses, {
-    fields: [orders.billingAddressId],
-    references: [addresses.id],
-  }),
-  items: many(orderItems),
-  payments: many(payments),
-}));
-
-export const orderItemsRelations = relations(orderItems, ({ one }) => ({
-  order: one(orders, {
-    fields: [orderItems.orderId],
-    references: [orders.id],
-  }),
-  productVariant: one(productVariants, {
-    fields: [orderItems.productVariantId],
-    references: [productVariants.id],
-  }),
-}));
+// Relations will be defined in the relations.ts file to avoid circular imports
 
 // Zod validation schemas
-export const orderStatusSchema = z.enum(["pending", "paid", "shipped", "delivered", "cancelled"]);
+export const orderStatusSchema = z.enum([
+  "pending",
+  "paid",
+  "shipped",
+  "delivered",
+  "cancelled",
+]);
 
 export const orderSchema = z.object({
   id: z.string().uuid(),

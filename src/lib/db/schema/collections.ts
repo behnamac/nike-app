@@ -1,5 +1,4 @@
 import { pgTable, uuid, varchar, timestamp } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 export const collections = pgTable("collections", {
@@ -11,24 +10,11 @@ export const collections = pgTable("collections", {
 
 export const productCollections = pgTable("product_collections", {
   id: uuid("id").primaryKey().defaultRandom(),
-  productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
-  collectionId: uuid("collection_id").notNull().references(() => collections.id, { onDelete: "cascade" }),
+  productId: uuid("product_id").notNull(),
+  collectionId: uuid("collection_id").notNull(),
 });
 
-export const collectionsRelations = relations(collections, ({ many }) => ({
-  productCollections: many(productCollections),
-}));
-
-export const productCollectionsRelations = relations(productCollections, ({ one }) => ({
-  product: one(products, {
-    fields: [productCollections.productId],
-    references: [products.id],
-  }),
-  collection: one(collections, {
-    fields: [productCollections.collectionId],
-    references: [collections.id],
-  }),
-}));
+// Relations will be defined in the relations.ts file to avoid circular imports
 
 // Zod validation schemas
 export const collectionSchema = z.object({
@@ -38,7 +24,10 @@ export const collectionSchema = z.object({
   createdAt: z.date(),
 });
 
-export const newCollectionSchema = collectionSchema.omit({ id: true, createdAt: true });
+export const newCollectionSchema = collectionSchema.omit({
+  id: true,
+  createdAt: true,
+});
 
 export const productCollectionSchema = z.object({
   id: z.string().uuid(),
@@ -46,7 +35,9 @@ export const productCollectionSchema = z.object({
   collectionId: z.string().uuid(),
 });
 
-export const newProductCollectionSchema = productCollectionSchema.omit({ id: true });
+export const newProductCollectionSchema = productCollectionSchema.omit({
+  id: true,
+});
 
 export type Collection = typeof collections.$inferSelect;
 export type NewCollection = typeof collections.$inferInsert;

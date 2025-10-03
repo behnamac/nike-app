@@ -1,24 +1,14 @@
 import { pgTable, uuid, timestamp } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 export const wishlists = pgTable("wishlists", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
-  productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull(),
+  productId: uuid("product_id").notNull(),
   addedAt: timestamp("added_at").notNull().defaultNow(),
 });
 
-export const wishlistsRelations = relations(wishlists, ({ one }) => ({
-  user: one(user, {
-    fields: [wishlists.userId],
-    references: [user.id],
-  }),
-  product: one(products, {
-    fields: [wishlists.productId],
-    references: [products.id],
-  }),
-}));
+// Relations will be defined in the relations.ts file to avoid circular imports
 
 // Zod validation schemas
 export const wishlistSchema = z.object({
@@ -28,7 +18,10 @@ export const wishlistSchema = z.object({
   addedAt: z.date(),
 });
 
-export const newWishlistSchema = wishlistSchema.omit({ id: true, addedAt: true });
+export const newWishlistSchema = wishlistSchema.omit({
+  id: true,
+  addedAt: true,
+});
 
 export type Wishlist = typeof wishlists.$inferSelect;
 export type NewWishlist = typeof wishlists.$inferInsert;
