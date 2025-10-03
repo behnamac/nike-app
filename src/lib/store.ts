@@ -1,17 +1,14 @@
 import { create } from "zustand";
 
 export interface Product {
-  id: number;
+  id: string;
   name: string;
   description: string | null;
-  price: string;
-  image: string | null;
-  category: string | null;
-  brand: string;
-  size: string | null;
-  color: string | null;
-  stock: number;
-  isActive: boolean;
+  categoryId: string;
+  genderId: string;
+  brandId: string;
+  isPublished: boolean;
+  defaultVariantId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
