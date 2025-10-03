@@ -1,5 +1,4 @@
 import { pgTable, uuid, varchar } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 export const brands = pgTable("brands", {
@@ -9,9 +8,7 @@ export const brands = pgTable("brands", {
   logoUrl: varchar("logo_url", { length: 500 }), // Optional logo URL
 });
 
-export const brandsRelations = relations(brands, ({ many }) => ({
-  products: many(products),
-}));
+// Relations will be defined in the relations.ts file to avoid circular imports
 
 // Zod validation schemas
 export const brandSchema = z.object({

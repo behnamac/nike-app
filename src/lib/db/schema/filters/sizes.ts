@@ -1,5 +1,4 @@
 import { pgTable, uuid, varchar, integer } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 export const sizes = pgTable("sizes", {
@@ -9,9 +8,7 @@ export const sizes = pgTable("sizes", {
   sortOrder: integer("sort_order").notNull().default(0), // for ordering: S < M < L
 });
 
-export const sizesRelations = relations(sizes, ({ many }) => ({
-  productVariants: many(productVariants),
-}));
+// Relations will be defined in the main index file to avoid circular imports
 
 // Zod validation schemas
 export const sizeSchema = z.object({

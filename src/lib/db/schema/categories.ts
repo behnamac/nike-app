@@ -1,22 +1,14 @@
 import { pgTable, uuid, varchar } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 100 }).notNull(),
   slug: varchar("slug", { length: 100 }).notNull().unique(),
-  parentId: uuid("parent_id").references(() => categories.id), // Self-referencing for hierarchical structure
+  parentId: uuid("parent_id"), // Self-referencing for hierarchical structure
 });
 
-export const categoriesRelations = relations(categories, ({ one, many }) => ({
-  parent: one(categories, {
-    fields: [categories.parentId],
-    references: [categories.id],
-  }),
-  children: many(categories),
-  products: many(products),
-}));
+// Relations will be defined in the relations.ts file to avoid circular imports
 
 // Zod validation schemas
 export const categorySchema = z.object({

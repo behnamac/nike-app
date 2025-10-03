@@ -1,5 +1,4 @@
 import { pgTable, uuid, varchar } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 export const colors = pgTable("colors", {
@@ -9,9 +8,7 @@ export const colors = pgTable("colors", {
   hexCode: varchar("hex_code", { length: 7 }).notNull(), // e.g., "#FF0000"
 });
 
-export const colorsRelations = relations(colors, ({ many }) => ({
-  productVariants: many(productVariants),
-}));
+// Relations will be defined in the main index file to avoid circular imports
 
 // Zod validation schemas
 export const colorSchema = z.object({

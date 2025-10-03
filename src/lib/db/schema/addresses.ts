@@ -1,5 +1,4 @@
 import { pgTable, uuid, varchar, boolean, pgEnum } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 // Enum for address types
@@ -7,7 +6,7 @@ export const addressTypeEnum = pgEnum("address_type", ["billing", "shipping"]);
 
 export const addresses = pgTable("addresses", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull(),
   type: addressTypeEnum("type").notNull(),
   line1: varchar("line1", { length: 255 }).notNull(),
   line2: varchar("line2", { length: 255 }),
@@ -18,12 +17,7 @@ export const addresses = pgTable("addresses", {
   isDefault: boolean("is_default").notNull().default(false),
 });
 
-export const addressesRelations = relations(addresses, ({ one }) => ({
-  user: one(user, {
-    fields: [addresses.userId],
-    references: [user.id],
-  }),
-}));
+// Relations will be defined in the relations.ts file to avoid circular imports
 
 // Zod validation schemas
 export const addressTypeSchema = z.enum(["billing", "shipping"]);

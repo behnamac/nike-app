@@ -8,9 +8,7 @@ export const genders = pgTable("genders", {
   slug: varchar("slug", { length: 50 }).notNull().unique(), // e.g., "men", "women", "kids"
 });
 
-export const gendersRelations = relations(genders, ({ many }) => ({
-  products: many(products),
-}));
+// Relations will be defined in the main index file to avoid circular imports
 
 // Zod validation schemas
 export const genderSchema = z.object({
