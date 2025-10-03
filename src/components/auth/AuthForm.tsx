@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import FormInput from "./FormInput";
-import SocialButton from "./SocialButton";
 import { signIn, signUp } from "@/lib/auth/actions";
 
 interface AuthFormProps {
@@ -59,11 +58,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
     }
   };
 
-  const handleSocialAuth = (provider: "google" | "apple") => {
-    // Social auth will be implemented with Better Auth
-    console.log(`${provider} authentication`);
-  };
-
   const isSignUp = mode === "signup";
 
   return (
@@ -78,30 +72,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
             ? "Create your account to start your fitness journey"
             : "Sign in to your Nike account"}
         </p>
-      </div>
-
-      {/* Social Sign-in Buttons */}
-      <div className="space-y-3">
-        <SocialButton
-          provider="google"
-          onClick={() => handleSocialAuth("google")}
-        />
-        <SocialButton
-          provider="apple"
-          onClick={() => handleSocialAuth("apple")}
-        />
-      </div>
-
-      {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300" />
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">
-            Or sign {isSignUp ? "up" : "in"} with
-          </span>
-        </div>
       </div>
 
       {/* Error Display */}
