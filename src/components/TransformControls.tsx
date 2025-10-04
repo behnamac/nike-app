@@ -40,7 +40,7 @@ export default function TransformControls({
   };
 
   return (
-    <div className="absolute -top-58 inset-  left-0 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200 z-[9999] max-w-xs">
+    <div className="absolute inset-  left-0 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200 z-[9999] max-w-xs">
       <h3 className="text-sm font-semibold text-gray-800 mb-4">
         Model Controls
       </h3>

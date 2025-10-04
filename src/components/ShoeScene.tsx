@@ -13,7 +13,7 @@ export default function ShoeScene({ className = "" }: ShoeSceneProps) {
   const [transform, setTransform] = useState({
     position: [0, 0, 0] as [number, number, number],
     rotation: [0, 0, 0] as [number, number, number],
-    scale: [3, 3, 3] as [number, number, number],
+    scale: [2, 2, 2] as [number, number, number],
   });
 
   return (
