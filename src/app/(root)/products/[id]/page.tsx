@@ -1,14 +1,15 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Star, Heart, ImageOff } from "lucide-react";
-import { mockProducts } from "@/lib/data/mock-products";
-import Card from "@/components/Card";
+import { Heart, ImageOff } from "lucide-react";
+import { getProduct } from "@/lib/actions/product";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductGallery from "@/components/ProductGallery";
 import SizePicker from "@/components/SizePicker";
 import CollapsibleSection from "@/components/CollapsibleSection";
 import ColorSelector from "@/components/ColorSelector";
+import ProductReviews from "@/components/ProductReviews";
+import RecommendedProducts from "@/components/RecommendedProducts";
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -16,10 +17,10 @@ interface ProductPageProps {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
-
-  // Find the product by ID (using mock data)
-  const product = mockProducts.find((p) => p.id === id);
-
+ 
+  // Fetch product from database
+  const product = await getProduct(id);
+ 
   if (!product) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -46,17 +47,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
     );
   }
 
-  // Get related products (excluding current product)
-  const relatedProducts = mockProducts.filter((p) => p.id !== id).slice(0, 3);
-
-  // Get default variant
-  const defaultVariant =
-    product.variants.find((v) => v.id === product.defaultVariantId) ||
-    product.variants[0];
+  // Get default variant - use first variant if available
+  const defaultVariant = product.variants && product.variants.length > 0 
+    ? product.variants[0] as Record<string, unknown>
+    : null;
 
   // Get primary image
-  const primaryImage =
-    product.images.find((img) => img.isPrimary) || product.images[0];
+  const primaryImage = product.images && product.images.length > 0 
+    ? (product.images[0] as Record<string, unknown>)?.url as string
+    : null;
 
   return (
     <div className="min-h-screen bg-white">
@@ -80,8 +79,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
               }
             >
               <ProductGallery
-                images={product.images}
-                defaultImage={primaryImage}
+                images={product.images.map((img: Record<string, unknown>) => ({
+                  id: img.id as string,
+                  url: img.url as string,
+                  isPrimary: img.isPrimary as boolean || false,
+                  sortOrder: img.sortOrder as number || 0,
+                }))}
+                defaultImage={primaryImage ? {id: '1', url: primaryImage, isPrimary: true, sortOrder: 0} : undefined}
               />
             </Suspense>
           </div>
@@ -91,12 +95,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {/* Product Title & Category */}
             <div>
               <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                {product.name}
+                {(product as Record<string, unknown>).name as string}
               </h1>
               <p className="text-lg text-gray-600">
-                {product.gender.charAt(0).toUpperCase() +
-                  product.gender.slice(1)}
-                &apos;s Shoes
+                {((product as Record<string, unknown>).gender as Record<string, unknown>)?.label as string}&apos;s Shoes
               </p>
             </div>
 
@@ -104,15 +106,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <div className="space-y-2">
               <div className="flex items-center space-x-3">
                 <span className="text-3xl font-bold text-gray-900">
-                  ${defaultVariant.salePrice || defaultVariant.price}
+                  ${String((defaultVariant as Record<string, unknown>)?.salePrice || (defaultVariant as Record<string, unknown>)?.price || ((product as Record<string, unknown>).minPrice as number) || 0)}
                 </span>
-                {defaultVariant.salePrice && (
+                {Boolean((defaultVariant as Record<string, unknown>)?.salePrice) && Boolean((defaultVariant as Record<string, unknown>)?.price) && (
                   <span className="text-xl text-gray-500 line-through">
-                    ${defaultVariant.price}
+                    ${String((defaultVariant as Record<string, unknown>).price)}
                   </span>
                 )}
               </div>
-              {defaultVariant.salePrice && (
+              {Boolean((defaultVariant as Record<string, unknown>)?.salePrice) && (
                 <p className="text-sm text-green-600 font-medium">
                   Extra 20% off w/ code SPORT
                 </p>
@@ -135,8 +137,22 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 }
               >
                 <ColorSelector
-                  variants={product.variants}
-                  defaultVariant={defaultVariant}
+                  variants={product.variants.map((v: Record<string, unknown>) => ({
+                    id: v.id as string,
+                    color: (v.color as Record<string, unknown>).name as string,
+                    size: (v.size as Record<string, unknown>).name as string,
+                    price: v.price as number,
+                    salePrice: v.salePrice as number | undefined,
+                    inStock: v.inStock as number,
+                  }))}
+                  defaultVariant={defaultVariant ? {
+                    id: (defaultVariant as Record<string, unknown>).id as string,
+                    color: ((defaultVariant as Record<string, unknown>).color as Record<string, unknown>).name as string,
+                    size: ((defaultVariant as Record<string, unknown>).size as Record<string, unknown>).name as string,
+                    price: (defaultVariant as Record<string, unknown>).price as number,
+                    salePrice: (defaultVariant as Record<string, unknown>).salePrice as number | undefined,
+                    inStock: (defaultVariant as Record<string, unknown>).inStock as number,
+                  } : undefined}
                 />
               </Suspense>
             </div>
@@ -206,21 +222,32 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 </div>
               </CollapsibleSection>
 
-              <CollapsibleSection title="Reviews (10)" isExpanded={false}>
-                <div className="flex items-center space-x-2 mb-4">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="w-5 h-5 text-yellow-400 fill-current"
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm text-gray-600">4.8 out of 5</span>
-                </div>
-                <p className="text-sm text-gray-600">
-                  No reviews yet. Be the first to review this product!
-                </p>
+              <CollapsibleSection title="Reviews" isExpanded={false}>
+                <Suspense
+                  fallback={
+                    <div className="animate-pulse space-y-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex space-x-1">
+                          {[...Array(5)].map((_, i) => (
+                            <div key={i} className="w-5 h-5 bg-gray-200 rounded" />
+                          ))}
+                        </div>
+                        <div className="h-6 w-20 bg-gray-200 rounded" />
+                      </div>
+                      <div className="space-y-3">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="space-y-2">
+                            <div className="h-4 w-32 bg-gray-200 rounded" />
+                            <div className="h-3 w-full bg-gray-200 rounded" />
+                            <div className="h-3 w-3/4 bg-gray-200 rounded" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  }
+                >
+                  <ProductReviews productId={(product as Record<string, unknown>).id as string} />
+                </Suspense>
               </CollapsibleSection>
             </div>
           </div>
@@ -228,45 +255,28 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
         {/* You Might Also Like Section */}
         <div className="mt-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">
-            You Might Also Like
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {relatedProducts.map((relatedProduct) => {
-              const relatedDefaultVariant =
-                relatedProduct.variants.find(
-                  (v) => v.id === relatedProduct.defaultVariantId
-                ) || relatedProduct.variants[0];
-              const relatedPrimaryImage =
-                relatedProduct.images.find((img) => img.isPrimary) ||
-                relatedProduct.images[0];
-
-              return (
-                <Link
-                  key={relatedProduct.id}
-                  href={`/products/${relatedProduct.id}`}
-                >
-                  <Card
-                    title={relatedProduct.name}
-                    category={
-                      relatedProduct.category.charAt(0).toUpperCase() +
-                      relatedProduct.category.slice(1)
-                    }
-                    colors={`${relatedDefaultVariant.color.charAt(0).toUpperCase() + relatedDefaultVariant.color.slice(1)} • Size ${relatedDefaultVariant.size}`}
-                    price={`$${relatedDefaultVariant.salePrice || relatedDefaultVariant.price}`}
-                    image={relatedPrimaryImage?.url}
-                    badge={
-                      relatedDefaultVariant.salePrice
-                        ? "Sale"
-                        : relatedDefaultVariant.inStock > 20
-                          ? "Best Seller"
-                          : undefined
-                    }
-                  />
-                </Link>
-              );
-            })}
-          </div>
+          <Suspense
+            fallback={
+              <div className="space-y-6">
+                <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
+                      <div className="aspect-square bg-gray-200" />
+                      <div className="p-4 space-y-2">
+                        <div className="h-4 w-3/4 bg-gray-200 rounded" />
+                        <div className="h-3 w-1/2 bg-gray-200 rounded" />
+                        <div className="h-3 w-1/2 bg-gray-200 rounded" />
+                        <div className="h-6 w-16 bg-gray-200 rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            }
+          >
+            <RecommendedProducts productId={(product as Record<string, unknown>).id as string} />
+          </Suspense>
         </div>
       </div>
 

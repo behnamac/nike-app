@@ -4,6 +4,16 @@ import { db } from "@/lib/db";
 import { products, productVariants } from "@/lib/db/schema";
 import { eq, like, inArray, desc, asc, sql } from "drizzle-orm";
 
+// Type definitions
+export interface Review {
+  id: string;
+  author: string;
+  rating: number;
+  title?: string;
+  content: string;
+  createdAt: Date;
+}
+
 export interface ProductFilters {
   search?: string;
   categoryId?: string[];
@@ -405,6 +415,148 @@ export async function getProduct(productId: string) {
     })),
     images: imagesQuery.rows,
   };
+}
+
+/**
+ * Get product reviews
+ */
+export async function getProductReviews(productId: string): Promise<Review[]> {
+  try {
+    // Test database connection
+    await db.execute(sql`SELECT 1`);
+  } catch (error) {
+    console.warn("Database not available, returning empty reviews:", error);
+    return [];
+  }
+
+  try {
+    const reviewsResult = await db.execute(sql`
+      SELECT 
+        r.id,
+        r.product_id,
+        r.user_id,
+        r.rating,
+        r.comment,
+        r.created_at,
+        u.name as author_name
+      FROM reviews r
+      LEFT JOIN users u ON r.user_id = u.id
+      WHERE r.product_id = ${productId}
+      ORDER BY r.created_at DESC
+      LIMIT 10
+    `);
+
+    return reviewsResult.rows.map((review: Record<string, unknown>) => ({
+      id: review.id as string,
+      author: review.author_name as string || 'Anonymous',
+      rating: review.rating as number,
+      title: undefined, // Not in current schema
+      content: review.comment as string || '',
+      createdAt: review.created_at as Date,
+    }));
+  } catch (error) {
+    console.warn("Failed to fetch reviews:", error);
+    return [];
+  }
+}
+
+/**
+ * Get recommended products
+ */
+export async function getRecommendedProducts(productId: string): Promise<ProductWithDetails[]> {
+  try {
+    // Test database connection
+    await db.execute(sql`SELECT 1`);
+  } catch (error) {
+    console.warn("Database not available, returning empty recommendations:", error);
+    return [];
+  }
+
+  try {
+    // Get products in the same category/brand/gender, excluding current product
+    const recommendedResult = await db.execute(sql`
+      SELECT 
+        p.id,
+        p.name,
+        p.description,
+        p.category_id,
+        p.gender_id,
+        p.brand_id,
+        p.is_published,
+        p.default_variant_id,
+        p.created_at,
+        p.updated_at,
+        c.id as category_rel_id,
+        c.name as category_name,
+        c.slug as category_slug,
+        g.id as gender_rel_id,
+        g.label as gender_label,
+        g.slug as gender_slug,
+        b.id as brand_rel_id,
+        b.name as brand_name,
+        b.slug as brand_slug,
+        MIN(pv.price) as min_price,
+        MAX(pv.price) as max_price,
+        (
+          SELECT pi.url
+          FROM product_images pi
+          WHERE pi.product_id = p.id
+          AND pi.is_primary = true
+          LIMIT 1
+        ) as primary_image
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN genders g ON p.gender_id = g.id
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN product_variants pv ON p.id = pv.product_id
+      WHERE p.is_published = true 
+      AND p.id != ${productId}
+      AND (
+        p.category_id = (SELECT category_id FROM products WHERE id = ${productId})
+        OR p.brand_id = (SELECT brand_id FROM products WHERE id = ${productId})
+        OR p.gender_id = (SELECT gender_id FROM products WHERE id = ${productId})
+      )
+      GROUP BY p.id, c.id, g.id, b.id
+      ORDER BY RANDOM()
+      LIMIT 6
+    `);
+
+    return recommendedResult.rows.map((product: Record<string, unknown>) => ({
+      id: product.id as string,
+      name: product.name as string,
+      description: product.description as string | null,
+      categoryId: product.category_id as string,
+      genderId: product.gender_id as string,
+      brandId: product.brand_id as string,
+      isPublished: product.is_published as boolean,
+      defaultVariantId: product.default_variant_id as string | null,
+      createdAt: product.created_at as Date,
+      updatedAt: product.updated_at as Date,
+      minPrice: Number(product.min_price),
+      maxPrice: Number(product.max_price),
+      primaryImage: product.primary_image as string | null,
+      category: {
+        id: product.category_rel_id as string,
+        name: product.category_name as string,
+        slug: product.category_slug as string,
+      },
+      gender: {
+        id: product.gender_rel_id as string,
+        label: product.gender_label as string,
+        slug: product.gender_slug as string,
+      },
+      brand: {
+        id: product.brand_rel_id as string,
+        name: product.brand_name as string,
+        slug: product.brand_slug as string,
+      },
+      variants: [], // Not needed for recommendations
+      images: [], // Not needed for recommendations
+    }));
+  } catch (error) {
+    console.warn("Failed to fetch recommended products:", error);
+    return [];
+  }
 }
 
 /**
