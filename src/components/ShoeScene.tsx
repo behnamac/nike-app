@@ -23,7 +23,14 @@ export default function ShoeScene({ className = "" }: ShoeSceneProps) {
 
     const width = window.innerWidth;
 
-    if (width >= 1024 && width < 1440) {
+    if (width === 1920) {
+      // 1920px Resolution - Optimized for your monitor
+      return {
+        position: [0, 0, 0] as [number, number, number],
+        rotation: [0, 0, 0] as [number, number, number],
+        scale: [2.5, 2.5, 2.5] as [number, number, number],
+      };
+    } else if (width >= 1024 && width < 1440) {
       // Standard Desktop (1024px - 1439px)
       return {
         position: [0, 0, 0] as [number, number, number],
