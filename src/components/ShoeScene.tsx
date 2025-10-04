@@ -3,7 +3,6 @@
 import { Suspense, useState, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import ShoeModel from "./ShoeModel";
-import TransformControls from "./TransformControls";
 
 interface ShoeSceneProps {
   className?: string;
@@ -75,15 +74,6 @@ export default function ShoeScene({ className = "" }: ShoeSceneProps) {
 
   return (
     <div className={`w-full h-full relative ${className}`}>
-      {/* Transform Controls UI */}
-      <TransformControls
-        onTransformChange={(newTransform) => {
-          console.log("ShoeScene received transform:", newTransform);
-          setTransform(newTransform);
-        }}
-        initialTransform={transform}
-      />
-
       <Canvas
         camera={{
           position: [0, 0, 8],
