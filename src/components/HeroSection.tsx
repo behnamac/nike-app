@@ -44,23 +44,23 @@ export default function HeroSection() {
 
       {/* Text Content Overlay */}
       <div className="absolute inset-0 z-20 flex items-center pointer-events-none">
-        <div className="container mx-auto px-6 md:px-2 py-12 lg:py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[70vh] lg:min-h-[80vh]">
+        <div className="container mx-auto px-4 md:px-6 lg:px-2 py-8 md:py-12 lg:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 lg:gap-12 items-center min-h-[60vh] md:min-h-[70vh] lg:min-h-[80vh]">
             {/* Left Section - Text Content */}
-            <div className="lg:space-y-4 space-y- lg:order-1">
+            <div className="space-y-3 md:space-y-4 lg:space-y-6 xl:space-y-8 order-2 lg:order-1 text-center lg:text-left">
               {/* Bold & Sporty tag */}
-              <div className="text-pink-600 font-medium text-xs sm:text-sm tracking-wide uppercase">
+              <div className="text-pink-600 font-medium text-xs md:text-sm tracking-wide uppercase">
                 Bold & Sporty
               </div>
 
               {/* Main Title */}
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
+              <h1 className="text-2xl md:text-4xl lg:text-6xl xl:text-7xl font-bold leading-tight">
                 <span className="block text-slate-800">Style That Moves</span>
                 <span className="block text-blue-900">With You.</span>
               </h1>
 
               {/* Description */}
-              <p className="text-sm sm:text-base lg:text-lg text-slate-700 max-w-lg leading-relaxed">
+              <p className="text-sm md:text-base lg:text-lg text-slate-700 max-w-md lg:max-w-lg leading-relaxed mx-auto lg:mx-0">
                 Not just style. Not just comfort. Footwear that effortlessly
                 moves with your every step.
               </p>
@@ -68,26 +68,26 @@ export default function HeroSection() {
               {/* CTA Button */}
               <Link
                 href="/products"
-                className="inline-block bg-black text-white px-6 py-3 sm:px-8 sm:py-4 rounded-3xl font-medium text-sm sm:text-base lg:text-lg hover:bg-gray-800 transition-colors duration-300 w-full sm:w-auto text-center pointer-events-auto"
+                className="inline-block bg-black text-white px-6 py-3 md:px-8 md:py-4 rounded-3xl font-medium text-sm md:text-base lg:text-lg hover:bg-gray-800 transition-colors duration-300 w-full md:w-auto text-center pointer-events-auto max-w-xs md:max-w-none mx-auto lg:mx-0"
               >
                 Find Your Shoe
               </Link>
             </div>
 
             {/* Right Section - Brand Text Overlay */}
-            <div className="relative order-1 lg:order-2 w-full h-[60vh] lg:h-[80vh]">
+            <div className="relative order-1 lg:order-2 w-full h-[40vh] md:h-[60vh] lg:h-[80vh]">
               {/* Brand Text "Dunk High" */}
-              <div className="absolute -top-4 -left-2 sm:-top-6 sm:-left-3 lg:-top-8 lg:-left-4 text-4xl sm:text-6xl lg:text-8xl font-bold text-orange-500 z-30 drop-shadow-lg">
+              <div className="absolute top-2 left-2 md:-top-6 md:-left-3 lg:-top-8 lg:-left-4 text-2xl md:text-6xl lg:text-8xl font-bold text-orange-500 z-30 drop-shadow-lg">
                 Dunk High
               </div>
 
               {/* Brand Text "Hawaii" */}
-              <div className="absolute md:-right-4 md:bottom-0 right-0 bottom-2 lg:-right-8 text-3xl sm:text-5xl lg:text-9xl font-bold text-blue-900 z-10 drop-shadow-lg">
+              <div className="absolute bottom-2 right-2 md:-right-4 md:bottom-0 lg:-right-8 text-xl md:text-5xl lg:text-9xl font-bold text-blue-900 z-10 drop-shadow-lg">
                 Hawaii
               </div>
 
               {/* Diagonal Tropical Graphic */}
-              <div className="absolute -bottom-8 -right-8 sm:-bottom-12 sm:-right-12 lg:-bottom-16 lg:-right-16 w-32 h-16 sm:w-48 sm:h-24 lg:w-64 lg:h-32 bg-gradient-to-br from-pink-500 to-blue-500 transform rotate-12 opacity-80 z-0"></div>
+              <div className="absolute bottom-0 right-0 md:-bottom-12 md:-right-12 lg:-bottom-16 lg:-right-16 w-20 h-10 md:w-48 md:h-24 lg:w-64 lg:h-32 bg-gradient-to-br from-pink-500 to-blue-500 transform rotate-12 opacity-80 z-0"></div>
             </div>
           </div>
         </div>
