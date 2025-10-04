@@ -19,6 +19,8 @@ export default function ShoeModel({
 }: ShoeModelProps) {
   const meshRef = useRef<THREE.Mesh>(null);
 
+  console.log("ShoeModel props:", { scale, position, rotation });
+
   // Load the GLB model
   const gltf = useLoader(
     GLTFLoader,
@@ -42,17 +44,16 @@ export default function ShoeModel({
       <pointLight position={[-10, -10, -5]} intensity={0.5} />
 
       {/* Shoe Model */}
-      <primitive
-        ref={meshRef}
-        object={gltf.scene}
-        scale={scale}
+      <group
         position={position}
         rotation={[
           (rotation[0] * Math.PI) / 180,
           (rotation[1] * Math.PI) / 180,
           (rotation[2] * Math.PI) / 180,
         ]}
-      />
+      >
+        <primitive ref={meshRef} object={gltf.scene} scale={scale} />
+      </group>
 
       {/* Camera Controls */}
       <OrbitControls
@@ -62,6 +63,7 @@ export default function ShoeModel({
         autoRotateSpeed={0.5}
         maxPolarAngle={Math.PI / 2}
         minPolarAngle={Math.PI / 3}
+        target={position}
       />
     </>
   );

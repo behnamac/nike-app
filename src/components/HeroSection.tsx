@@ -9,13 +9,18 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-[url('/hero-bg.png')] bg-cover bg-center"></div>
       </div>
 
-      {/* 3D Scene - Full Hero Section */}
-      <div className="absolute inset-0 w-full h-full z-10">
-        <ShoeScene className="w-full h-full" />
+      {/* 3D Scene - Right Side Only */}
+      <div className="absolute inset-0 w-full h-full z-[9999]">
+        <div className="w-full h-full flex">
+          {/* Left side - empty space for text */}
+          <div className="w-1/2 h-full"></div>
+          {/* Right side - 3D model */}
+          <ShoeScene className="w-full h-full" />
+        </div>
       </div>
 
       {/* Text Content Overlay */}
-      <div className="absolute inset-0 z-20 flex items-center">
+      <div className="absolute inset-0 z-20 flex items-center pointer-events-none">
         <div className="container mx-auto px-6 md:px-2 py-12 lg:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[70vh] lg:min-h-[80vh]">
             {/* Left Section - Text Content */}
@@ -40,7 +45,7 @@ export default function HeroSection() {
               {/* CTA Button */}
               <Link
                 href="/products"
-                className="inline-block bg-black text-white px-6 py-3 sm:px-8 sm:py-4 rounded-3xl font-medium text-sm sm:text-base lg:text-lg hover:bg-gray-800 transition-colors duration-300 w-full sm:w-auto text-center"
+                className="inline-block bg-black text-white px-6 py-3 sm:px-8 sm:py-4 rounded-3xl font-medium text-sm sm:text-base lg:text-lg hover:bg-gray-800 transition-colors duration-300 w-full sm:w-auto text-center pointer-events-auto"
               >
                 Find Your Shoe
               </Link>
@@ -50,12 +55,12 @@ export default function HeroSection() {
             <div className="relative order-1 lg:order-2 w-full h-[60vh] lg:h-[80vh]">
               {/* Brand Text "AIR" */}
               <div className="absolute -top-4 -left-2 sm:-top-6 sm:-left-3 lg:-top-8 lg:-left-4 text-4xl sm:text-6xl lg:text-8xl font-bold text-orange-500 z-30">
-                AIR
+                Dunk High
               </div>
 
               {/* Brand Text "JORDAN" */}
-              <div className="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6 lg:-bottom-8 lg:-right-8 text-3xl sm:text-5xl lg:text-9xl font-bold text-black z-30">
-                JORDAN
+              <div className="absolute -right-4 sm:-right-6 lg:-bottom-0 lg:-right-8 text-3xl sm:text-5xl lg:text-9xl font-bold text-black z-30">
+                Hawaii
               </div>
 
               {/* Diagonal Pink Graphic */}

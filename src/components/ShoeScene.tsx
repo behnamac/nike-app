@@ -11,16 +11,19 @@ interface ShoeSceneProps {
 
 export default function ShoeScene({ className = "" }: ShoeSceneProps) {
   const [transform, setTransform] = useState({
-    position: [0, 0, 0] as [number, number, number],
+    position: [-0.5, -1.2, 2.6] as [number, number, number],
     rotation: [0, 0, 0] as [number, number, number],
-    scale: [2, 2, 2] as [number, number, number],
+    scale: [1.5, 1.5, 1.5] as [number, number, number],
   });
 
   return (
     <div className={`w-full h-full relative ${className}`}>
       {/* Transform Controls UI */}
       <TransformControls
-        onTransformChange={setTransform}
+        onTransformChange={(newTransform) => {
+          console.log("ShoeScene received transform:", newTransform);
+          setTransform(newTransform);
+        }}
         initialTransform={transform}
       />
 
