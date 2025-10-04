@@ -26,15 +26,17 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <div className="w-8 h-8 relative">
-              <Image
-                src="/logo.svg"
-                alt="Nike Logo"
-                width={32}
-                height={32}
-                className="w-full h-full filter brightness-0"
-              />
-            </div>
+            <Link href="/" className="block">
+              <div className="w-8 h-8 relative">
+                <Image
+                  src="/logo.svg"
+                  alt="Nike Logo"
+                  width={32}
+                  height={32}
+                  className="w-full h-full filter brightness-0"
+                />
+              </div>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
