@@ -118,7 +118,7 @@ export default function HeroSection() {
             {/* Right Section - Brand Text Overlay */}
             <div className="relative w-full h-[80vh]">
               {/* Brand Text "Dunk High" */}
-              <div className="absolute -top-8 -left-4 text-8xl font-bold text-orange-500 z-30 drop-shadow-lg">
+              <div className="absolute -top-8 -translate-x-1/2 text-8xl font-bold text-orange-500 z-30 drop-shadow-lg">
                 Dunk High
               </div>
 
