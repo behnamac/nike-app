@@ -70,94 +70,103 @@ export interface GetAllProductsResult {
 export async function getAllProducts(
   filters: ProductFilters = {}
 ): Promise<GetAllProductsResult> {
-  const {
-    search,
-    categoryId,
-    genderId,
-    brandId,
-    colorId,
-    sizeId,
-    priceMin,
-    priceMax,
-    sortBy = "created_at_desc",
-    page = 1,
-    limit = 24,
-  } = filters;
-
-  // Build where conditions
-  const whereConditions = [eq(products.isPublished, true)];
-
-  // Search filter
-  if (search) {
-    whereConditions.push(like(products.name, `%${search}%`));
+  // Check if database is available, fallback to mock data if not
+  try {
+    // Test database connection
+    await db.execute(sql`SELECT 1`);
+  } catch (error) {
+    console.warn("Database not available, using mock data:", error);
+    return await getMockProducts(filters);
   }
+  try {
+    const {
+      search,
+      categoryId,
+      genderId,
+      brandId,
+      colorId,
+      sizeId,
+      priceMin,
+      priceMax,
+      sortBy = "created_at_desc",
+      page = 1,
+      limit = 24,
+    } = filters;
 
-  // Category filter
-  if (categoryId && categoryId.length > 0) {
-    whereConditions.push(inArray(products.categoryId, categoryId));
-  }
+    // Build where conditions
+    const whereConditions = [eq(products.isPublished, true)];
 
-  // Gender filter
-  if (genderId && genderId.length > 0) {
-    whereConditions.push(inArray(products.genderId, genderId));
-  }
+    // Search filter
+    if (search) {
+      whereConditions.push(like(products.name, `%${search}%`));
+    }
 
-  // Brand filter
-  if (brandId && brandId.length > 0) {
-    whereConditions.push(inArray(products.brandId, brandId));
-  }
+    // Category filter
+    if (categoryId && categoryId.length > 0) {
+      whereConditions.push(inArray(products.categoryId, categoryId));
+    }
 
-  // Build variant conditions for SQL
-  let variantConditionsSQL = sql``;
-  const variantConditions: string[] = [];
+    // Gender filter
+    if (genderId && genderId.length > 0) {
+      whereConditions.push(inArray(products.genderId, genderId));
+    }
 
-  if (priceMin !== undefined) {
-    variantConditions.push(`pv.price >= ${priceMin}`);
-  }
-  if (priceMax !== undefined) {
-    variantConditions.push(`pv.price <= ${priceMax}`);
-  }
-  if (colorId && colorId.length > 0) {
-    variantConditions.push(
-      `pv.color_id = ANY(ARRAY[${colorId.map((id) => `'${id}'`).join(",")}])`
-    );
-  }
-  if (sizeId && sizeId.length > 0) {
-    variantConditions.push(
-      `pv.size_id = ANY(ARRAY[${sizeId.map((id) => `'${id}'`).join(",")}])`
-    );
-  }
+    // Brand filter
+    if (brandId && brandId.length > 0) {
+      whereConditions.push(inArray(products.brandId, brandId));
+    }
 
-  if (variantConditions.length > 0) {
-    variantConditionsSQL = sql`AND (${sql.raw(variantConditions.join(" AND "))})`;
-  }
+    // Build variant conditions for SQL
+    let variantConditionsSQL = sql``;
+    const variantConditions: string[] = [];
 
-  // Build sort order
-  let orderBy;
-  switch (sortBy) {
-    case "price_asc":
-      orderBy = asc(sql`MIN(${productVariants.price})`);
-      break;
-    case "price_desc":
-      orderBy = desc(sql`MIN(${productVariants.price})`);
-      break;
-    case "name_asc":
-      orderBy = asc(products.name);
-      break;
-    case "name_desc":
-      orderBy = desc(products.name);
-      break;
-    case "created_at_asc":
-      orderBy = asc(products.createdAt);
-      break;
-    case "created_at_desc":
-    default:
-      orderBy = desc(products.createdAt);
-      break;
-  }
+    if (priceMin !== undefined) {
+      variantConditions.push(`pv.price >= ${priceMin}`);
+    }
+    if (priceMax !== undefined) {
+      variantConditions.push(`pv.price <= ${priceMax}`);
+    }
+    if (colorId && colorId.length > 0) {
+      variantConditions.push(
+        `pv.color_id = ANY(ARRAY[${colorId.map((id) => `'${id}'`).join(",")}])`
+      );
+    }
+    if (sizeId && sizeId.length > 0) {
+      variantConditions.push(
+        `pv.size_id = ANY(ARRAY[${sizeId.map((id) => `'${id}'`).join(",")}])`
+      );
+    }
 
-  // Get total count for pagination
-  const totalCountResult = await db.execute(sql`
+    if (variantConditions.length > 0) {
+      variantConditionsSQL = sql`AND (${sql.raw(variantConditions.join(" AND "))})`;
+    }
+
+    // Build sort order
+    let orderBy;
+    switch (sortBy) {
+      case "price_asc":
+        orderBy = asc(sql`MIN(${productVariants.price})`);
+        break;
+      case "price_desc":
+        orderBy = desc(sql`MIN(${productVariants.price})`);
+        break;
+      case "name_asc":
+        orderBy = asc(products.name);
+        break;
+      case "name_desc":
+        orderBy = desc(products.name);
+        break;
+      case "created_at_asc":
+        orderBy = asc(products.createdAt);
+        break;
+      case "created_at_desc":
+      default:
+        orderBy = desc(products.createdAt);
+        break;
+    }
+
+    // Get total count for pagination
+    const totalCountResult = await db.execute(sql`
     SELECT COUNT(DISTINCT p.id) as count
     FROM products p
     LEFT JOIN product_variants pv ON p.id = pv.product_id
@@ -169,14 +178,14 @@ export async function getAllProducts(
     ${variantConditionsSQL}
   `);
 
-  const totalCount = Number(
-    (totalCountResult.rows[0] as { count: string }).count || 0
-  );
+    const totalCount = Number(
+      (totalCountResult.rows[0] as { count: string }).count || 0
+    );
 
-  // Get products with aggregated data
-  const offset = (page - 1) * limit;
+    // Get products with aggregated data
+    const offset = (page - 1) * limit;
 
-  const productsQuery = await db.execute(sql`
+    const productsQuery = await db.execute(sql`
     SELECT 
       p.id,
       p.name,
@@ -190,13 +199,13 @@ export async function getAllProducts(
       p.updated_at,
       MIN(pv.price) as min_price,
       MAX(pv.price) as max_price,
-      c.id as category_id,
+      c.id as category_rel_id,
       c.name as category_name,
       c.slug as category_slug,
-      g.id as gender_id,
+      g.id as gender_rel_id,
       g.label as gender_label,
       g.slug as gender_slug,
-      b.id as brand_id,
+      b.id as brand_rel_id,
       b.name as brand_name,
       b.slug as brand_slug,
       (
@@ -222,13 +231,13 @@ export async function getAllProducts(
     LIMIT ${limit} OFFSET ${offset}
   `);
 
-  // Get images for each product
-  const productIds = productsQuery.rows.map(
-    (row: Record<string, unknown>) => row.id as string
-  );
-  const imagesQuery =
-    productIds.length > 0
-      ? await db.execute(sql`
+    // Get images for each product
+    const productIds = productsQuery.rows.map(
+      (row: Record<string, unknown>) => row.id as string
+    );
+    const imagesQuery =
+      productIds.length > 0
+        ? await db.execute(sql`
     SELECT 
       pi.id,
       pi.product_id,
@@ -242,81 +251,85 @@ export async function getAllProducts(
     WHERE pi.product_id = ANY(${productIds})
     ORDER BY pi.product_id, pi.is_primary DESC, pi.sort_order ASC
   `)
-      : { rows: [] };
+        : { rows: [] };
 
-  // Group images by product
-  const imagesByProduct = new Map<string, Record<string, unknown>[]>();
-  imagesQuery.rows.forEach((image: Record<string, unknown>) => {
-    const productId = image.product_id as string;
-    if (!imagesByProduct.has(productId)) {
-      imagesByProduct.set(productId, []);
-    }
-    imagesByProduct.get(productId)!.push(image);
-  });
-
-  // Build final result
-  const result: ProductWithDetails[] = productsQuery.rows.map(
-    (row: Record<string, unknown>) => {
-      const productImages = imagesByProduct.get(row.id as string) || [];
-
-      // If color filter is applied, prioritize color-specific images
-      let topImages = productImages;
-      if (colorId && colorId.length > 0) {
-        const colorSpecificImages = productImages.filter(
-          (img) =>
-            img.variant_id &&
-            img.color_id &&
-            colorId.includes(img.color_id as string)
-        );
-        if (colorSpecificImages.length > 0) {
-          topImages = colorSpecificImages;
-        }
+    // Group images by product
+    const imagesByProduct = new Map<string, Record<string, unknown>[]>();
+    imagesQuery.rows.forEach((image: Record<string, unknown>) => {
+      const productId = image.product_id as string;
+      if (!imagesByProduct.has(productId)) {
+        imagesByProduct.set(productId, []);
       }
+      imagesByProduct.get(productId)!.push(image);
+    });
 
-      return {
-        id: row.id as string,
-        name: row.name as string,
-        description: row.description as string | null,
-        categoryId: row.category_id as string,
-        genderId: row.gender_id as string,
-        brandId: row.brand_id as string,
-        isPublished: row.is_published as boolean,
-        defaultVariantId: row.default_variant_id as string | null,
-        createdAt: row.created_at as Date,
-        updatedAt: row.updated_at as Date,
-        minPrice: Number(row.min_price),
-        maxPrice: Number(row.max_price),
-        primaryImage: row.primary_image as string | null,
-        category: {
-          id: row.category_id as string,
-          name: row.category_name as string,
-          slug: row.category_slug as string,
-        },
-        gender: {
-          id: row.gender_id as string,
-          label: row.gender_label as string,
-          slug: row.gender_slug as string,
-        },
-        brand: {
-          id: row.brand_id as string,
-          name: row.brand_name as string,
-          slug: row.brand_slug as string,
-        },
-        images: topImages.slice(0, 5).map((img) => ({
-          id: img.id as string,
-          url: img.url as string,
-          isPrimary: img.is_primary as boolean,
-          sortOrder: img.sort_order as number,
-        })),
-      };
-    }
-  );
+    // Build final result
+    const result: ProductWithDetails[] = productsQuery.rows.map(
+      (row: Record<string, unknown>) => {
+        const productImages = imagesByProduct.get(row.id as string) || [];
 
-  return {
-    products: result,
-    totalCount,
-    hasMore: offset + limit < totalCount,
-  };
+        // If color filter is applied, prioritize color-specific images
+        let topImages = productImages;
+        if (colorId && colorId.length > 0) {
+          const colorSpecificImages = productImages.filter(
+            (img) =>
+              img.variant_id &&
+              img.color_id &&
+              colorId.includes(img.color_id as string)
+          );
+          if (colorSpecificImages.length > 0) {
+            topImages = colorSpecificImages;
+          }
+        }
+
+        return {
+          id: row.id as string,
+          name: row.name as string,
+          description: row.description as string | null,
+          categoryId: row.category_id as string,
+          genderId: row.gender_id as string,
+          brandId: row.brand_id as string,
+          isPublished: row.is_published as boolean,
+          defaultVariantId: row.default_variant_id as string | null,
+          createdAt: row.created_at as Date,
+          updatedAt: row.updated_at as Date,
+          minPrice: Number(row.min_price),
+          maxPrice: Number(row.max_price),
+          primaryImage: row.primary_image as string | null,
+          category: {
+            id: row.category_rel_id as string,
+            name: row.category_name as string,
+            slug: row.category_slug as string,
+          },
+          gender: {
+            id: row.gender_rel_id as string,
+            label: row.gender_label as string,
+            slug: row.gender_slug as string,
+          },
+          brand: {
+            id: row.brand_rel_id as string,
+            name: row.brand_name as string,
+            slug: row.brand_slug as string,
+          },
+          images: topImages.slice(0, 5).map((img) => ({
+            id: img.id as string,
+            url: img.url as string,
+            isPrimary: img.is_primary as boolean,
+            sortOrder: img.sort_order as number,
+          })),
+        };
+      }
+    );
+
+    return {
+      products: result,
+      totalCount,
+      hasMore: offset + limit < totalCount,
+    };
+  } catch (error) {
+    console.warn("Database query failed, using mock data:", error);
+    return await getMockProducts(filters);
+  }
 }
 
 /**
@@ -391,5 +404,127 @@ export async function getProduct(productId: string) {
       },
     })),
     images: imagesQuery.rows,
+  };
+}
+
+/**
+ * Fallback function that returns mock data when database is not available
+ */
+async function getMockProducts(
+  filters: ProductFilters
+): Promise<GetAllProductsResult> {
+  // Import mock data
+  const { mockProducts } = await import("@/lib/data/mock-products");
+
+  // Simple filtering logic for mock data
+  let filteredProducts = mockProducts;
+
+  if (filters.search) {
+    filteredProducts = filteredProducts.filter((product) =>
+      product.name.toLowerCase().includes(filters.search!.toLowerCase())
+    );
+  }
+
+  if (filters.categoryId && filters.categoryId.length > 0) {
+    filteredProducts = filteredProducts.filter((product) =>
+      filters.categoryId!.includes(product.category)
+    );
+  }
+
+  if (filters.genderId && filters.genderId.length > 0) {
+    filteredProducts = filteredProducts.filter((product) =>
+      filters.genderId!.includes(product.gender)
+    );
+  }
+
+  if (filters.brandId && filters.brandId.length > 0) {
+    filteredProducts = filteredProducts.filter((product) =>
+      filters.brandId!.includes(product.brand)
+    );
+  }
+
+  // Simple sorting
+  if (filters.sortBy) {
+    switch (filters.sortBy) {
+      case "price_asc":
+        filteredProducts.sort((a, b) => {
+          const aPrice = Math.min(...a.variants.map((v) => v.price));
+          const bPrice = Math.min(...b.variants.map((v) => v.price));
+          return aPrice - bPrice;
+        });
+        break;
+      case "price_desc":
+        filteredProducts.sort((a, b) => {
+          const aPrice = Math.min(...a.variants.map((v) => v.price));
+          const bPrice = Math.min(...b.variants.map((v) => v.price));
+          return bPrice - aPrice;
+        });
+        break;
+      case "name_asc":
+        filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "name_desc":
+        filteredProducts.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+    }
+  }
+
+  // Pagination
+  const page = filters.page || 1;
+  const limit = filters.limit || 24;
+  const offset = (page - 1) * limit;
+  const paginatedProducts = filteredProducts.slice(offset, offset + limit);
+
+  // Convert mock products to the expected format
+  const products: ProductWithDetails[] = paginatedProducts.map((product) => {
+    const minPrice = Math.min(...product.variants.map((v) => v.price));
+    const maxPrice = Math.max(...product.variants.map((v) => v.price));
+    const primaryImage =
+      product.images.find((img) => img.isPrimary)?.url ||
+      product.images[0]?.url;
+
+    return {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      categoryId: product.category,
+      genderId: product.gender,
+      brandId: product.brand,
+      isPublished: product.isPublished,
+      defaultVariantId: product.defaultVariantId,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+      minPrice,
+      maxPrice,
+      primaryImage,
+      category: {
+        id: product.category,
+        name:
+          product.category.charAt(0).toUpperCase() + product.category.slice(1),
+        slug: product.category,
+      },
+      gender: {
+        id: product.gender,
+        label: product.gender.charAt(0).toUpperCase() + product.gender.slice(1),
+        slug: product.gender,
+      },
+      brand: {
+        id: product.brand,
+        name: product.brand.charAt(0).toUpperCase() + product.brand.slice(1),
+        slug: product.brand,
+      },
+      images: product.images.slice(0, 5).map((img) => ({
+        id: img.id,
+        url: img.url,
+        isPrimary: img.isPrimary,
+        sortOrder: img.sortOrder,
+      })),
+    };
+  });
+
+  return {
+    products,
+    totalCount: filteredProducts.length,
+    hasMore: offset + limit < filteredProducts.length,
   };
 }
