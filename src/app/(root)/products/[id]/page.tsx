@@ -10,6 +10,7 @@ import CollapsibleSection from "@/components/CollapsibleSection";
 import ColorSelector from "@/components/ColorSelector";
 import ProductReviews from "@/components/ProductReviews";
 import RecommendedProducts from "@/components/RecommendedProducts";
+import AddToCart from "@/components/AddToCart";
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -17,10 +18,10 @@ interface ProductPageProps {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
- 
+
   // Fetch product from database
   const product = await getProduct(id);
- 
+
   if (!product) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -48,14 +49,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   // Get default variant - use first variant if available
-  const defaultVariant = product.variants && product.variants.length > 0 
-    ? product.variants[0] as Record<string, unknown>
-    : null;
+  const defaultVariant =
+    product.variants && product.variants.length > 0
+      ? (product.variants[0] as Record<string, unknown>)
+      : null;
 
   // Get primary image
-  const primaryImage = product.images && product.images.length > 0 
-    ? (product.images[0] as Record<string, unknown>)?.url as string
-    : null;
+  const primaryImage =
+    product.images && product.images.length > 0
+      ? ((product.images[0] as Record<string, unknown>)?.url as string)
+      : null;
 
   return (
     <div className="min-h-screen bg-white">
@@ -82,10 +85,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 images={product.images.map((img: Record<string, unknown>) => ({
                   id: img.id as string,
                   url: img.url as string,
-                  isPrimary: img.isPrimary as boolean || false,
-                  sortOrder: img.sortOrder as number || 0,
+                  isPrimary: (img.isPrimary as boolean) || false,
+                  sortOrder: (img.sortOrder as number) || 0,
                 }))}
-                defaultImage={primaryImage ? {id: '1', url: primaryImage, isPrimary: true, sortOrder: 0} : undefined}
+                defaultImage={
+                  primaryImage
+                    ? {
+                        id: "1",
+                        url: primaryImage,
+                        isPrimary: true,
+                        sortOrder: 0,
+                      }
+                    : undefined
+                }
               />
             </Suspense>
           </div>
@@ -98,7 +110,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 {(product as Record<string, unknown>).name as string}
               </h1>
               <p className="text-lg text-gray-600">
-                {((product as Record<string, unknown>).gender as Record<string, unknown>)?.label as string}&apos;s Shoes
+                {
+                  (
+                    (product as Record<string, unknown>).gender as Record<
+                      string,
+                      unknown
+                    >
+                  )?.label as string
+                }
+                &apos;s Shoes
               </p>
             </div>
 
@@ -106,15 +126,32 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <div className="space-y-2">
               <div className="flex items-center space-x-3">
                 <span className="text-3xl font-bold text-gray-900">
-                  ${String((defaultVariant as Record<string, unknown>)?.salePrice || (defaultVariant as Record<string, unknown>)?.price || ((product as Record<string, unknown>).minPrice as number) || 0)}
+                  $
+                  {String(
+                    (defaultVariant as Record<string, unknown>)?.salePrice ||
+                      (defaultVariant as Record<string, unknown>)?.price ||
+                      ((product as Record<string, unknown>)
+                        .minPrice as number) ||
+                      0
+                  )}
                 </span>
-                {Boolean((defaultVariant as Record<string, unknown>)?.salePrice) && Boolean((defaultVariant as Record<string, unknown>)?.price) && (
-                  <span className="text-xl text-gray-500 line-through">
-                    ${String((defaultVariant as Record<string, unknown>).price)}
-                  </span>
-                )}
+                {Boolean(
+                  (defaultVariant as Record<string, unknown>)?.salePrice
+                ) &&
+                  Boolean(
+                    (defaultVariant as Record<string, unknown>)?.price
+                  ) && (
+                    <span className="text-xl text-gray-500 line-through">
+                      $
+                      {String(
+                        (defaultVariant as Record<string, unknown>).price
+                      )}
+                    </span>
+                  )}
               </div>
-              {Boolean((defaultVariant as Record<string, unknown>)?.salePrice) && (
+              {Boolean(
+                (defaultVariant as Record<string, unknown>)?.salePrice
+              ) && (
                 <p className="text-sm text-green-600 font-medium">
                   Extra 20% off w/ code SPORT
                 </p>
@@ -137,22 +174,39 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 }
               >
                 <ColorSelector
-                  variants={product.variants.map((v: Record<string, unknown>) => ({
-                    id: v.id as string,
-                    color: (v.color as Record<string, unknown>).name as string,
-                    size: (v.size as Record<string, unknown>).name as string,
-                    price: v.price as number,
-                    salePrice: v.salePrice as number | undefined,
-                    inStock: v.inStock as number,
-                  }))}
-                  defaultVariant={defaultVariant ? {
-                    id: (defaultVariant as Record<string, unknown>).id as string,
-                    color: ((defaultVariant as Record<string, unknown>).color as Record<string, unknown>).name as string,
-                    size: ((defaultVariant as Record<string, unknown>).size as Record<string, unknown>).name as string,
-                    price: (defaultVariant as Record<string, unknown>).price as number,
-                    salePrice: (defaultVariant as Record<string, unknown>).salePrice as number | undefined,
-                    inStock: (defaultVariant as Record<string, unknown>).inStock as number,
-                  } : undefined}
+                  variants={product.variants.map(
+                    (v: Record<string, unknown>) => ({
+                      id: v.id as string,
+                      color: (v.color as Record<string, unknown>)
+                        .name as string,
+                      size: (v.size as Record<string, unknown>).name as string,
+                      price: v.price as number,
+                      salePrice: v.salePrice as number | undefined,
+                      inStock: v.inStock as number,
+                    })
+                  )}
+                  defaultVariant={
+                    defaultVariant
+                      ? {
+                          id: (defaultVariant as Record<string, unknown>)
+                            .id as string,
+                          color: (
+                            (defaultVariant as Record<string, unknown>)
+                              .color as Record<string, unknown>
+                          ).name as string,
+                          size: (
+                            (defaultVariant as Record<string, unknown>)
+                              .size as Record<string, unknown>
+                          ).name as string,
+                          price: (defaultVariant as Record<string, unknown>)
+                            .price as number,
+                          salePrice: (defaultVariant as Record<string, unknown>)
+                            .salePrice as number | undefined,
+                          inStock: (defaultVariant as Record<string, unknown>)
+                            .inStock as number,
+                        }
+                      : undefined
+                  }
                 />
               </Suspense>
             </div>
@@ -182,9 +236,43 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <button className="w-full bg-black text-white py-3 px-6 rounded-md font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors">
-                Add to Bag
-              </button>
+              {defaultVariant && (
+                <AddToCart
+                  productVariantId={
+                    (defaultVariant as Record<string, unknown>).id as string
+                  }
+                  productId={(product as Record<string, unknown>).id as string}
+                  productName={
+                    (product as Record<string, unknown>).name as string
+                  }
+                  productImage={primaryImage || ""}
+                  color={
+                    (
+                      (defaultVariant as Record<string, unknown>)
+                        .color as Record<string, unknown>
+                    ).name as string
+                  }
+                  size={
+                    (
+                      (defaultVariant as Record<string, unknown>)
+                        .size as Record<string, unknown>
+                    ).name as string
+                  }
+                  price={
+                    (defaultVariant as Record<string, unknown>).price as number
+                  }
+                  salePrice={
+                    (defaultVariant as Record<string, unknown>).salePrice as
+                      | number
+                      | undefined
+                  }
+                  inStock={
+                    (defaultVariant as Record<string, unknown>)
+                      .inStock as number
+                  }
+                  className="w-full"
+                />
+              )}
               <button className="w-full border border-gray-300 text-gray-900 py-3 px-6 rounded-md font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors flex items-center justify-center space-x-2">
                 <Heart className="w-5 h-5" />
                 <span>Favorite</span>
@@ -229,7 +317,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
                       <div className="flex items-center space-x-4">
                         <div className="flex space-x-1">
                           {[...Array(5)].map((_, i) => (
-                            <div key={i} className="w-5 h-5 bg-gray-200 rounded" />
+                            <div
+                              key={i}
+                              className="w-5 h-5 bg-gray-200 rounded"
+                            />
                           ))}
                         </div>
                         <div className="h-6 w-20 bg-gray-200 rounded" />
@@ -246,7 +337,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
                     </div>
                   }
                 >
-                  <ProductReviews productId={(product as Record<string, unknown>).id as string} />
+                  <ProductReviews
+                    productId={
+                      (product as Record<string, unknown>).id as string
+                    }
+                  />
                 </Suspense>
               </CollapsibleSection>
             </div>
@@ -261,7 +356,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {[...Array(3)].map((_, i) => (
-                    <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
+                    <div
+                      key={i}
+                      className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse"
+                    >
                       <div className="aspect-square bg-gray-200" />
                       <div className="p-4 space-y-2">
                         <div className="h-4 w-3/4 bg-gray-200 rounded" />
@@ -275,7 +373,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </div>
             }
           >
-            <RecommendedProducts productId={(product as Record<string, unknown>).id as string} />
+            <RecommendedProducts
+              productId={(product as Record<string, unknown>).id as string}
+            />
           </Suspense>
         </div>
       </div>

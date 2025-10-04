@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FaUser, FaSignOutAlt } from "react-icons/fa";
 import { useAuth } from "@/lib/auth/context";
+import CartIcon from "./CartIcon";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -80,12 +81,7 @@ export default function Navbar() {
             >
               Search
             </a>
-            <a
-              href="#"
-              className="text-gray-900 hover:text-gray-700 text-sm font-medium transition-colors"
-            >
-              My Cart (2)
-            </a>
+            <CartIcon />
             {loading ? (
               <div className="flex items-center space-x-2 text-gray-500 text-sm font-medium">
                 <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
@@ -198,12 +194,9 @@ export default function Navbar() {
             >
               Search
             </a>
-            <a
-              href="#"
-              className="text-gray-900 hover:text-gray-700 block px-3 py-2 text-base font-medium"
-            >
-              My Cart (2)
-            </a>
+            <div className="px-3 py-2">
+              <CartIcon />
+            </div>
             {loading ? (
               <div className="flex items-center space-x-2 text-gray-500 px-3 py-2 text-base font-medium">
                 <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>

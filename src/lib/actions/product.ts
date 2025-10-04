@@ -346,75 +346,88 @@ export async function getAllProducts(
  * Get a single product with full details
  */
 export async function getProduct(productId: string) {
-  const productQuery = await db.execute(sql`
-    SELECT 
-      p.*,
-      c.name as category_name,
-      c.slug as category_slug,
-      g.label as gender_label,
-      g.slug as gender_slug,
-      b.name as brand_name,
-      b.slug as brand_slug
-    FROM products p
-    LEFT JOIN categories c ON p.category_id = c.id
-    LEFT JOIN genders g ON p.gender_id = g.id
-    LEFT JOIN brands b ON p.brand_id = b.id
-    WHERE p.id = ${productId} AND p.is_published = true
-  `);
-
-  if (productQuery.rows.length === 0) {
-    return null;
+  try {
+    // Test database connection
+    await db.execute(sql`SELECT 1`);
+  } catch (error) {
+    console.warn("Database not available, using mock data:", error);
+    return getMockProduct(productId);
   }
 
-  const product = productQuery.rows[0] as Record<string, unknown>;
+  try {
+    const productQuery = await db.execute(sql`
+      SELECT 
+        p.*,
+        c.name as category_name,
+        c.slug as category_slug,
+        g.label as gender_label,
+        g.slug as gender_slug,
+        b.name as brand_name,
+        b.slug as brand_slug
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN genders g ON p.gender_id = g.id
+      LEFT JOIN brands b ON p.brand_id = b.id
+      WHERE p.id = ${productId} AND p.is_published = true
+    `);
 
-  // Get variants with color and size details
-  const variantsQuery = await db.execute(sql`
-    SELECT 
-      pv.*,
-      c.name as color_name,
-      c.slug as color_slug,
-      c.hex_code,
-      s.name as size_name,
-      s.slug as size_slug,
-      s.sort_order as size_sort_order
-    FROM product_variants pv
-    LEFT JOIN colors c ON pv.color_id = c.id
-    LEFT JOIN sizes s ON pv.size_id = s.id
-    WHERE pv.product_id = ${productId}
-    ORDER BY c.name, s.sort_order
-  `);
+    if (productQuery.rows.length === 0) {
+      return null;
+    }
 
-  // Get all images
-  const imagesQuery = await db.execute(sql`
-    SELECT 
-      pi.*,
-      pv.color_id
-    FROM product_images pi
-    LEFT JOIN product_variants pv ON pi.variant_id = pv.id
-    WHERE pi.product_id = ${productId}
-    ORDER BY pi.is_primary DESC, pi.sort_order ASC
-  `);
+    const product = productQuery.rows[0] as Record<string, unknown>;
 
-  return {
-    ...product,
-    variants: variantsQuery.rows.map((variant: Record<string, unknown>) => ({
-      ...variant,
-      color: {
-        id: variant.color_id as string,
-        name: variant.color_name as string,
-        slug: variant.color_slug as string,
-        hexCode: variant.hex_code as string,
-      },
-      size: {
-        id: variant.size_id as string,
-        name: variant.size_name as string,
-        slug: variant.size_slug as string,
-        sortOrder: variant.size_sort_order as number,
-      },
-    })),
-    images: imagesQuery.rows,
-  };
+    // Get variants with color and size details
+    const variantsQuery = await db.execute(sql`
+      SELECT 
+        pv.*,
+        c.name as color_name,
+        c.slug as color_slug,
+        c.hex_code,
+        s.name as size_name,
+        s.slug as size_slug,
+        s.sort_order as size_sort_order
+      FROM product_variants pv
+      LEFT JOIN colors c ON pv.color_id = c.id
+      LEFT JOIN sizes s ON pv.size_id = s.id
+      WHERE pv.product_id = ${productId}
+      ORDER BY c.name, s.sort_order
+    `);
+
+    // Get all images
+    const imagesQuery = await db.execute(sql`
+      SELECT 
+        pi.*,
+        pv.color_id
+      FROM product_images pi
+      LEFT JOIN product_variants pv ON pi.variant_id = pv.id
+      WHERE pi.product_id = ${productId}
+      ORDER BY pi.is_primary DESC, pi.sort_order ASC
+    `);
+
+    return {
+      ...product,
+      variants: variantsQuery.rows.map((variant: Record<string, unknown>) => ({
+        ...variant,
+        color: {
+          id: variant.color_id as string,
+          name: variant.color_name as string,
+          slug: variant.color_slug as string,
+          hexCode: variant.hex_code as string,
+        },
+        size: {
+          id: variant.size_id as string,
+          name: variant.size_name as string,
+          slug: variant.size_slug as string,
+          sortOrder: variant.size_sort_order as number,
+        },
+      })),
+      images: imagesQuery.rows,
+    };
+  } catch (error) {
+    console.warn("Database query failed, using mock data:", error);
+    return getMockProduct(productId);
+  }
 }
 
 /**
@@ -448,10 +461,10 @@ export async function getProductReviews(productId: string): Promise<Review[]> {
 
     return reviewsResult.rows.map((review: Record<string, unknown>) => ({
       id: review.id as string,
-      author: review.author_name as string || 'Anonymous',
+      author: (review.author_name as string) || "Anonymous",
       rating: review.rating as number,
       title: undefined, // Not in current schema
-      content: review.comment as string || '',
+      content: (review.comment as string) || "",
       createdAt: review.created_at as Date,
     }));
   } catch (error) {
@@ -463,12 +476,17 @@ export async function getProductReviews(productId: string): Promise<Review[]> {
 /**
  * Get recommended products
  */
-export async function getRecommendedProducts(productId: string): Promise<ProductWithDetails[]> {
+export async function getRecommendedProducts(
+  productId: string
+): Promise<ProductWithDetails[]> {
   try {
     // Test database connection
     await db.execute(sql`SELECT 1`);
   } catch (error) {
-    console.warn("Database not available, returning empty recommendations:", error);
+    console.warn(
+      "Database not available, returning empty recommendations:",
+      error
+    );
     return [];
   }
 
@@ -678,5 +696,112 @@ async function getMockProducts(
     products,
     totalCount: filteredProducts.length,
     hasMore: offset + limit < filteredProducts.length,
+  };
+}
+
+/**
+ * Get a single mock product by ID
+ */
+async function getMockProduct(productId: string) {
+  const { mockProducts } = await import("@/lib/data/mock-products");
+
+  const product = mockProducts.find(
+    (p) => (p as unknown as Record<string, unknown>).id === productId
+  );
+
+  if (!product) {
+    return null;
+  }
+
+  // Create mock variants and images
+  const mockVariants = [
+    {
+      id: `${productId}-variant-1`,
+      product_id: productId,
+      color_id: "color-1",
+      size_id: "size-1",
+      price: (product as unknown as Record<string, unknown>).price as number,
+      sale_price: (product as unknown as Record<string, unknown>).salePrice as
+        | number
+        | null,
+      stock: 10,
+      in_stock: true,
+      color: {
+        id: "color-1",
+        name: "Black",
+        slug: "black",
+        hexCode: "#000000",
+      },
+      size: {
+        id: "size-1",
+        name: "M",
+        slug: "m",
+        sortOrder: 1,
+      },
+    },
+    {
+      id: `${productId}-variant-2`,
+      product_id: productId,
+      color_id: "color-2",
+      size_id: "size-2",
+      price: (product as unknown as Record<string, unknown>).price as number,
+      sale_price: (product as unknown as Record<string, unknown>).salePrice as
+        | number
+        | null,
+      stock: 5,
+      in_stock: true,
+      color: {
+        id: "color-2",
+        name: "White",
+        slug: "white",
+        hexCode: "#FFFFFF",
+      },
+      size: {
+        id: "size-2",
+        name: "L",
+        slug: "l",
+        sortOrder: 2,
+      },
+    },
+  ];
+
+  const mockImages = [
+    {
+      id: `${productId}-image-1`,
+      product_id: productId,
+      variant_id: `${productId}-variant-1`,
+      url: (product as unknown as Record<string, unknown>).image as string,
+      is_primary: true,
+      sort_order: 1,
+    },
+    {
+      id: `${productId}-image-2`,
+      product_id: productId,
+      variant_id: `${productId}-variant-2`,
+      url: (product as unknown as Record<string, unknown>).image as string,
+      is_primary: false,
+      sort_order: 2,
+    },
+  ];
+
+  return {
+    ...product,
+    variants: mockVariants,
+    images: mockImages,
+    category: {
+      id: "category-1",
+      name: product.category as string,
+      slug: (product.category as string).toLowerCase().replace(/\s+/g, "-"),
+    },
+    gender: {
+      id: "gender-1",
+      label: "Men",
+      slug: "men",
+    },
+    brand: {
+      id: "brand-1",
+      name: "Nike",
+      slug: "nike",
+    },
   };
 }
