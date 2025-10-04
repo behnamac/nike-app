@@ -61,12 +61,12 @@ export default function HeroSection() {
             />
 
             {/* Mobile Brand Text "Dunk High" */}
-            <div className="absolute top-2 left-10 text-3xl font-bold text-orange-500 z-30 drop-shadow-lg">
-             <span className="">Dunk High</span> 
+            <div className="absolute top-2 left-4 md:top-4 md:left-8 lg:top-2 lg:left-10 text-2xl md:text-3xl lg:text-4xl font-bold text-orange-500 z-30 drop-shadow-lg">
+              Dunk High
             </div>
 
             {/* Mobile Brand Text "Hawaii" */}
-            <div className="absolute top-12 left-32 text-xl font-bold text-blue-900 z-10 drop-shadow-lg">
+            <div className="absolute top-8 left-20 md:top-12 md:left-28 lg:top-12 lg:left-32 text-lg md:text-xl lg:text-2xl font-bold text-blue-900 z-10 drop-shadow-lg">
               Hawaii
             </div>
           </div>
