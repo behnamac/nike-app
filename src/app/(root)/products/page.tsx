@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { parseProductFilters } from "@/lib/utils/query";
 import { getAllProducts } from "@/lib/actions/product";
 import Card from "@/components/Card";
@@ -161,17 +162,20 @@ export default async function ProductsPage({
                       : `$${product.minPrice} - $${product.maxPrice}`;
 
                   return (
-                    <Card
-                      key={product.id}
-                      title={product.name}
-                      category={product.category.name}
-                      colors={`${product.gender.label} • ${product.brand.name}`}
-                      price={priceDisplay}
-                      image={primaryImage}
-                      badge={
-                        product.minPrice < product.maxPrice ? "Sale" : undefined
-                      }
-                    />
+                    <Link key={product.id} href={`/products/${product.id}`}>
+                      <Card
+                        title={product.name}
+                        category={product.category.name}
+                        colors={`${product.gender.label} • ${product.brand.name}`}
+                        price={priceDisplay}
+                        image={primaryImage}
+                        badge={
+                          product.minPrice < product.maxPrice
+                            ? "Sale"
+                            : undefined
+                        }
+                      />
+                    </Link>
                   );
                 })}
               </div>
