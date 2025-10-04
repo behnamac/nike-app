@@ -19,11 +19,13 @@ export const orderStatusEnum = pgEnum("order_status", [
 
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull(),
+  userId: uuid("user_id"), // nullable for guest orders
+  guestId: uuid("guest_id"), // nullable for guest orders
+  stripeSessionId: uuid("stripe_session_id").notNull().unique(),
   status: orderStatusEnum("status").notNull().default("pending"),
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
-  shippingAddressId: uuid("shipping_address_id").notNull(),
-  billingAddressId: uuid("billing_address_id").notNull(),
+  shippingAddressId: uuid("shipping_address_id"),
+  billingAddressId: uuid("billing_address_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -51,11 +53,13 @@ export const orderStatusSchema = z.enum([
 
 export const orderSchema = z.object({
   id: z.string().uuid(),
-  userId: z.string().uuid(),
+  userId: z.string().uuid().nullable(),
+  guestId: z.string().uuid().nullable(),
+  stripeSessionId: z.string().uuid(),
   status: orderStatusSchema,
   totalAmount: z.number().positive(),
-  shippingAddressId: z.string().uuid(),
-  billingAddressId: z.string().uuid(),
+  shippingAddressId: z.string().uuid().nullable(),
+  billingAddressId: z.string().uuid().nullable(),
   createdAt: z.date(),
 });
 

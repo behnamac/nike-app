@@ -1,19 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useCartStore } from "@/store/cart.store";
 import { CartItemWithDetails } from "@/lib/actions/cart";
+import { createStripeCheckoutSession } from "@/lib/actions/checkout";
 
 interface CartSummaryProps {
   items: CartItemWithDetails[];
   isAuthenticated: boolean;
 }
 
-export default function CartSummary({
-  items,
-  isAuthenticated,
-}: CartSummaryProps) {
+export default function CartSummary({ items }: CartSummaryProps) {
   const { getTotalItems, getTotalPrice } = useCartStore();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const totalItems = getTotalItems();
   const subtotal = getTotalPrice();
@@ -21,15 +21,30 @@ export default function CartSummary({
   const tax = subtotal * 0.08; // 8% tax
   const total = subtotal + shipping + tax;
 
-  const handleCheckout = () => {
-    if (!isAuthenticated) {
-      // Redirect to auth page with return URL
-      window.location.href = `/auth?redirect=${encodeURIComponent("/cart")}`;
+  const handleCheckout = async () => {
+    if (items.length === 0) {
+      alert("Your cart is empty");
       return;
     }
 
-    // TODO: Implement checkout flow
-    console.log("Proceed to checkout");
+    setIsProcessing(true);
+
+    try {
+      // Create Stripe checkout session
+      const result = await createStripeCheckoutSession("current-cart");
+
+      if (result.success && result.data) {
+        // Redirect to Stripe checkout
+        window.location.href = result.data.checkoutUrl;
+      } else {
+        alert(result.error || "Failed to create checkout session");
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Failed to process checkout. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -73,10 +88,10 @@ export default function CartSummary({
       {/* Checkout Button */}
       <button
         onClick={handleCheckout}
-        disabled={items.length === 0}
+        disabled={items.length === 0 || isProcessing}
         className="w-full bg-black text-white py-3 px-4 rounded-md font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        Checkout
+        {isProcessing ? "Processing..." : "Checkout"}
       </button>
 
       {/* Continue Shopping */}
