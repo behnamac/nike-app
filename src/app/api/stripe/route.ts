@@ -4,6 +4,13 @@ import { createOrder } from "@/lib/actions/orders";
 import { clearCart } from "@/lib/actions/cart";
 
 export async function POST(request: NextRequest) {
+  if (!stripe) {
+    return NextResponse.json(
+      { error: "Stripe is not configured" },
+      { status: 500 }
+    );
+  }
+
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");
 

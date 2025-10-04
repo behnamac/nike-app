@@ -16,6 +16,13 @@ export async function createStripeCheckoutSession(
   cartId: string
 ): Promise<ActionResult<{ checkoutUrl: string }>> {
   try {
+    if (!stripe) {
+      return {
+        success: false,
+        error:
+          "Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.",
+      };
+    }
     // Get current user to determine if we need to merge guest cart
     const userResult = await getCurrentUser();
     const isAuthenticated = userResult.success && userResult.data;
