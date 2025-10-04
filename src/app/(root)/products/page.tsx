@@ -1,10 +1,6 @@
 import { Suspense } from "react";
-import { parseFilters } from "@/lib/utils/query";
-import {
-  mockProducts,
-  filterProducts,
-  sortProducts,
-} from "@/lib/data/mock-products";
+import { parseProductFilters } from "@/lib/utils/query";
+import { getAllProducts } from "@/lib/actions/product";
 import Card from "@/components/Card";
 import Filters from "@/components/Filters";
 import Sort from "@/components/Sort";
@@ -12,13 +8,18 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 interface ProductsPageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default function ProductsPage({ searchParams }: ProductsPageProps) {
+export default async function ProductsPage({
+  searchParams,
+}: ProductsPageProps) {
+  // Await searchParams
+  const resolvedSearchParams = await searchParams;
+
   // Convert searchParams to URLSearchParams format
   const urlSearchParams = new URLSearchParams();
-  Object.entries(searchParams).forEach(([key, value]) => {
+  Object.entries(resolvedSearchParams).forEach(([key, value]) => {
     if (value !== undefined) {
       if (Array.isArray(value)) {
         value.forEach((v) => urlSearchParams.append(key, v));
@@ -29,14 +30,10 @@ export default function ProductsPage({ searchParams }: ProductsPageProps) {
   });
 
   // Parse filters from URL
-  const filters = parseFilters(urlSearchParams);
+  const filters = parseProductFilters(urlSearchParams);
 
-  // Filter and sort products
-  const filteredProducts = filterProducts(mockProducts, filters);
-  const sortedProducts = sortProducts(
-    filteredProducts,
-    filters.sort || "featured"
-  );
+  // Fetch products from database
+  const { products: sortedProducts } = await getAllProducts(filters);
 
   // Get active filter count for display
   const activeFilterCount = Object.values(filters).filter((value) => {
@@ -89,7 +86,7 @@ export default function ProductsPage({ searchParams }: ProductsPageProps) {
                     <div className="animate-pulse bg-gray-200 h-10 w-32 rounded" />
                   }
                 >
-                  <Sort initialSort={filters.sort || "featured"} />
+                  <Sort initialSort={filters.sortBy || "created_at_desc"} />
                 </Suspense>
               </div>
             </div>
@@ -98,44 +95,54 @@ export default function ProductsPage({ searchParams }: ProductsPageProps) {
             {activeFilterCount > 0 && (
               <div className="mb-6">
                 <div className="flex flex-wrap gap-2">
-                  {filters.gender?.map((gender) => (
+                  {filters.genderId?.map((genderId) => (
                     <span
-                      key={gender}
+                      key={genderId}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
                     >
-                      {gender.charAt(0).toUpperCase() + gender.slice(1)}
+                      Gender: {genderId}
                     </span>
                   ))}
-                  {filters.color?.map((color) => (
+                  {filters.colorId?.map((colorId) => (
                     <span
-                      key={color}
+                      key={colorId}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800"
                     >
-                      {color.charAt(0).toUpperCase() + color.slice(1)}
+                      Color: {colorId}
                     </span>
                   ))}
-                  {filters.size?.map((size) => (
+                  {filters.sizeId?.map((sizeId) => (
                     <span
-                      key={size}
+                      key={sizeId}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800"
                     >
-                      Size {size}
+                      Size: {sizeId}
                     </span>
                   ))}
-                  {filters.price?.map((price) => (
-                    <span
-                      key={price}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800"
-                    >
-                      {price === "200+" ? "$200+" : `$${price}`}
+                  {filters.priceMin && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800">
+                      Min: ${filters.priceMin}
                     </span>
-                  ))}
-                  {filters.category?.map((category) => (
+                  )}
+                  {filters.priceMax && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800">
+                      Max: ${filters.priceMax}
+                    </span>
+                  )}
+                  {filters.categoryId?.map((categoryId) => (
                     <span
-                      key={category}
+                      key={categoryId}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-red-100 text-red-800"
                     >
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                      Category: {categoryId}
+                    </span>
+                  ))}
+                  {filters.brandId?.map((brandId) => (
+                    <span
+                      key={brandId}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800"
+                    >
+                      Brand: {brandId}
                     </span>
                   ))}
                 </div>
@@ -146,31 +153,23 @@ export default function ProductsPage({ searchParams }: ProductsPageProps) {
             {sortedProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {sortedProducts.map((product) => {
-                  const defaultVariant =
-                    product.variants.find(
-                      (v) => v.id === product.defaultVariantId
-                    ) || product.variants[0];
                   const primaryImage =
-                    product.images.find((img) => img.isPrimary) ||
-                    product.images[0];
+                    product.primaryImage || product.images[0]?.url;
+                  const priceDisplay =
+                    product.minPrice === product.maxPrice
+                      ? `$${product.minPrice}`
+                      : `$${product.minPrice} - $${product.maxPrice}`;
 
                   return (
                     <Card
                       key={product.id}
                       title={product.name}
-                      category={
-                        product.category.charAt(0).toUpperCase() +
-                        product.category.slice(1)
-                      }
-                      colors={`${defaultVariant.color.charAt(0).toUpperCase() + defaultVariant.color.slice(1)} • Size ${defaultVariant.size}`}
-                      price={`$${defaultVariant.salePrice || defaultVariant.price}`}
-                      image={primaryImage?.url}
+                      category={product.category.name}
+                      colors={`${product.gender.label} • ${product.brand.name}`}
+                      price={priceDisplay}
+                      image={primaryImage}
                       badge={
-                        defaultVariant.salePrice
-                          ? "Sale"
-                          : defaultVariant.inStock > 20
-                            ? "Best Seller"
-                            : undefined
+                        product.minPrice < product.maxPrice ? "Sale" : undefined
                       }
                     />
                   );

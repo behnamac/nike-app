@@ -1,13 +1,32 @@
 import queryString from "query-string";
 
 export interface FilterParams {
+  search?: string;
   gender?: string[];
   size?: string[];
   color?: string[];
   price?: string[];
   category?: string[];
+  brand?: string[];
+  priceMin?: number;
+  priceMax?: number;
   sort?: string;
   page?: number;
+  limit?: number;
+}
+
+export interface ProductFilters {
+  search?: string;
+  categoryId?: string[];
+  genderId?: string[];
+  brandId?: string[];
+  colorId?: string[];
+  sizeId?: string[];
+  priceMin?: number;
+  priceMax?: number;
+  sortBy?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface SortOption {
@@ -16,10 +35,12 @@ export interface SortOption {
 }
 
 export const SORT_OPTIONS: SortOption[] = [
-  { value: "featured", label: "Featured" },
-  { value: "newest", label: "Newest" },
+  { value: "created_at_desc", label: "Featured" },
+  { value: "created_at_desc", label: "Newest" },
   { value: "price_asc", label: "Price: Low to High" },
   { value: "price_desc", label: "Price: High to Low" },
+  { value: "name_asc", label: "Name: A to Z" },
+  { value: "name_desc", label: "Name: Z to A" },
 ];
 
 export const FILTER_OPTIONS = {
@@ -214,4 +235,69 @@ export function isFilterActive(
 ): boolean {
   const currentValues = filters[filterType];
   return Array.isArray(currentValues) && currentValues.includes(value);
+}
+
+/**
+ * Parse URL search params into ProductFilters for database queries
+ */
+export function parseProductFilters(
+  searchParams: URLSearchParams
+): ProductFilters {
+  const params = queryString.parse(searchParams.toString(), {
+    arrayFormat: "bracket",
+    parseNumbers: true,
+  });
+
+  return {
+    search: typeof params.search === "string" ? params.search : undefined,
+    categoryId: Array.isArray(params.category)
+      ? params.category.filter((v): v is string => typeof v === "string")
+      : params.category && typeof params.category === "string"
+        ? [params.category]
+        : undefined,
+    genderId: Array.isArray(params.gender)
+      ? params.gender.filter((v): v is string => typeof v === "string")
+      : params.gender && typeof params.gender === "string"
+        ? [params.gender]
+        : undefined,
+    brandId: Array.isArray(params.brand)
+      ? params.brand.filter((v): v is string => typeof v === "string")
+      : params.brand && typeof params.brand === "string"
+        ? [params.brand]
+        : undefined,
+    colorId: Array.isArray(params.color)
+      ? params.color.filter((v): v is string => typeof v === "string")
+      : params.color && typeof params.color === "string"
+        ? [params.color]
+        : undefined,
+    sizeId: Array.isArray(params.size)
+      ? params.size.filter((v): v is string => typeof v === "string")
+      : params.size && typeof params.size === "string"
+        ? [params.size]
+        : undefined,
+    priceMin: typeof params.priceMin === "number" ? params.priceMin : undefined,
+    priceMax: typeof params.priceMax === "number" ? params.priceMax : undefined,
+    sortBy: typeof params.sort === "string" ? params.sort : "created_at_desc",
+    page: typeof params.page === "number" ? params.page : 1,
+    limit: typeof params.limit === "number" ? params.limit : 24,
+  };
+}
+
+/**
+ * Convert legacy FilterParams to ProductFilters
+ */
+export function convertToProductFilters(filters: FilterParams): ProductFilters {
+  return {
+    search: filters.search,
+    categoryId: filters.category,
+    genderId: filters.gender,
+    brandId: filters.brand,
+    colorId: filters.color,
+    sizeId: filters.size,
+    priceMin: filters.priceMin,
+    priceMax: filters.priceMax,
+    sortBy: filters.sort || "created_at_desc",
+    page: filters.page || 1,
+    limit: filters.limit || 24,
+  };
 }
