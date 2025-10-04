@@ -50,7 +50,7 @@ export default function HeroSection() {
 
         {/* Shoe Image - Mobile Middle */}
         <div className="relative z-10 px-4">
-          <div className="flex justify-center">
+          <div className="flex justify-center relative">
             <Image
               src="/hero-shoe.png"
               alt="Nike Dunk High Hawaii"
@@ -59,6 +59,16 @@ export default function HeroSection() {
               className="object-contain w-full max-w-sm"
               priority
             />
+
+            {/* Mobile Brand Text "Dunk High" */}
+            <div className="absolute top-2 left-10 text-3xl font-bold text-orange-500 z-30 drop-shadow-lg">
+             <span className="">Dunk High</span> 
+            </div>
+
+            {/* Mobile Brand Text "Hawaii" */}
+            <div className="absolute top-12 left-32 text-xl font-bold text-blue-900 z-10 drop-shadow-lg">
+              Hawaii
+            </div>
           </div>
         </div>
 
