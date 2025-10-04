@@ -1,4 +1,4 @@
-import { stringify, parse } from "query-string";
+import queryString from "query-string";
 
 export interface FilterParams {
   gender?: string[];
@@ -67,35 +67,35 @@ export const FILTER_OPTIONS = {
  * Parse URL search params into filter object
  */
 export function parseFilters(searchParams: URLSearchParams): FilterParams {
-  const params = parse(searchParams.toString(), {
+  const params = queryString.parse(searchParams.toString(), {
     arrayFormat: "bracket",
     parseNumbers: true,
   });
 
   return {
     gender: Array.isArray(params.gender)
-      ? params.gender
-      : params.gender
+      ? params.gender.filter((v): v is string => typeof v === "string")
+      : params.gender && typeof params.gender === "string"
         ? [params.gender]
         : undefined,
     size: Array.isArray(params.size)
-      ? params.size
-      : params.size
+      ? params.size.filter((v): v is string => typeof v === "string")
+      : params.size && typeof params.size === "string"
         ? [params.size]
         : undefined,
     color: Array.isArray(params.color)
-      ? params.color
-      : params.color
+      ? params.color.filter((v): v is string => typeof v === "string")
+      : params.color && typeof params.color === "string"
         ? [params.color]
         : undefined,
     price: Array.isArray(params.price)
-      ? params.price
-      : params.price
+      ? params.price.filter((v): v is string => typeof v === "string")
+      : params.price && typeof params.price === "string"
         ? [params.price]
         : undefined,
     category: Array.isArray(params.category)
-      ? params.category
-      : params.category
+      ? params.category.filter((v): v is string => typeof v === "string")
+      : params.category && typeof params.category === "string"
         ? [params.category]
         : undefined,
     sort: typeof params.sort === "string" ? params.sort : undefined,
@@ -108,13 +108,13 @@ export function parseFilters(searchParams: URLSearchParams): FilterParams {
  */
 export function createSearchParams(filters: FilterParams): string {
   const cleanFilters = Object.fromEntries(
-    Object.entries(filters).filter(([_, value]) => {
+    Object.entries(filters).filter(([, value]) => {
       if (Array.isArray(value)) return value.length > 0;
       return value !== undefined && value !== null && value !== "";
     })
   );
 
-  return stringify(cleanFilters, {
+  return queryString.stringify(cleanFilters, {
     arrayFormat: "bracket",
     skipNull: true,
     skipEmptyString: true,

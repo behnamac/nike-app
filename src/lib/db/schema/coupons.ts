@@ -1,15 +1,28 @@
-import { pgTable, uuid, varchar, numeric, integer, timestamp, pgEnum } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import {
+  pgTable,
+  uuid,
+  varchar,
+  numeric,
+  integer,
+  timestamp,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 // Enum for discount types
-export const discountTypeEnum = pgEnum("discount_type", ["percentage", "fixed"]);
+export const discountTypeEnum = pgEnum("discount_type", [
+  "percentage",
+  "fixed",
+]);
 
 export const coupons = pgTable("coupons", {
   id: uuid("id").primaryKey().defaultRandom(),
   code: varchar("code", { length: 50 }).notNull().unique(),
   discountType: discountTypeEnum("discount_type").notNull(),
-  discountValue: numeric("discount_value", { precision: 10, scale: 2 }).notNull(),
+  discountValue: numeric("discount_value", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
   expiresAt: timestamp("expires_at"),
   maxUsage: integer("max_usage"),
   usedCount: integer("used_count").notNull().default(0),

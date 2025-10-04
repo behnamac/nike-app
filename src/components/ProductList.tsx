@@ -46,15 +46,11 @@ export default function ProductList() {
             <Card
               key={product.id}
               title={product.name}
-              category={product.category || undefined}
-              colors={
-                product.color
-                  ? `${product.color} • Size ${product.size}`
-                  : undefined
-              }
-              price={`$${product.price}`}
-              image={product.image || undefined}
-              badge={product.stock > 20 ? "Best Seller" : undefined}
+              category={product.categoryId || undefined}
+              colors={undefined}
+              price="Price not available"
+              image={undefined}
+              badge={undefined}
             />
           ))}
         </div>

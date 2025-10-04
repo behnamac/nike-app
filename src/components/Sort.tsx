@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SORT_OPTIONS, setSort } from "@/lib/utils/query";
+import { SORT_OPTIONS } from "@/lib/utils/query";
 
 interface SortProps {
   initialSort: string;
@@ -102,8 +102,8 @@ export default function Sort({ initialSort }: SortProps) {
                   className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-gray-50 focus:outline-none focus:bg-gray-50 ${
                     isSelected ? "bg-blue-50 text-blue-700" : "text-gray-700"
                   }`}
-                  role="menuitem"
-                  aria-checked={isSelected}
+                  role="option"
+                  aria-selected={isSelected}
                 >
                   <span>{option.label}</span>
                   {isSelected && (

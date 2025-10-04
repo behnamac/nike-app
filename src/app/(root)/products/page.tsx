@@ -16,10 +16,20 @@ interface ProductsPageProps {
 }
 
 export default function ProductsPage({ searchParams }: ProductsPageProps) {
+  // Convert searchParams to URLSearchParams format
+  const urlSearchParams = new URLSearchParams();
+  Object.entries(searchParams).forEach(([key, value]) => {
+    if (value !== undefined) {
+      if (Array.isArray(value)) {
+        value.forEach((v) => urlSearchParams.append(key, v));
+      } else {
+        urlSearchParams.append(key, value);
+      }
+    }
+  });
+
   // Parse filters from URL
-  const filters = parseFilters(
-    new URLSearchParams(searchParams as Record<string, string>)
-  );
+  const filters = parseFilters(urlSearchParams);
 
   // Filter and sort products
   const filteredProducts = filterProducts(mockProducts, filters);

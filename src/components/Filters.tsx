@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   FilterParams,
   FILTER_OPTIONS,
@@ -17,7 +17,6 @@ interface FiltersProps {
 
 export default function Filters({ initialFilters }: FiltersProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [filters, setFilters] = useState<FilterParams>(initialFilters);
   const [isOpen, setIsOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(

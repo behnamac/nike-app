@@ -1,3 +1,5 @@
+import { FilterParams } from "@/lib/utils/query";
+
 export interface ProductVariant {
   id: string;
   sku: string;
@@ -450,7 +452,7 @@ export const mockProducts: Product[] = [
   },
 ];
 
-export function filterProducts(products: Product[], filters: any) {
+export function filterProducts(products: Product[], filters: FilterParams) {
   return products.filter((product) => {
     // Gender filter
     if (filters.gender && filters.gender.length > 0) {
