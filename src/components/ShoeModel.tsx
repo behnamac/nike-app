@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef, useEffect } from "react";
-import { useFrame, useLoader } from "@react-three/fiber";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { OrbitControls } from "@react-three/drei";
+import { useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
 interface ShoeModelProps {
@@ -22,10 +21,7 @@ export default function ShoeModel({
   console.log("ShoeModel props:", { scale, position, rotation });
 
   // Load the GLB model
-  const gltf = useLoader(
-    GLTFLoader,
-    "/model/nike_dunk_hawaii_-_6k_triangles.glb"
-  );
+  const gltf = useGLTF("/model/nike_dunk_hawaii_-_6k_triangles.glb");
 
   // Animation loop
   useFrame((state) => {

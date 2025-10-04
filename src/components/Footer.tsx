@@ -228,7 +228,7 @@ export default function Footer() {
             {/* Copyright and Legal Links */}
             <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6">
               <p className="text-gray-400 text-sm">
-                Croatia © 2025 Nike, Inc. All Rights Reserved
+                NL © 2025 Nike, Inc. All Rights Reserved
               </p>
               <div className="flex space-x-4 text-sm">
                 <a

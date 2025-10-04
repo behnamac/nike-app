@@ -7,4 +7,3 @@ export { default as Filters } from "./Filters";
 export { default as Sort } from "./Sort";
 export { default as ShoeModel } from "./ShoeModel";
 export { default as ShoeScene } from "./ShoeScene";
-export { default as TransformControls } from "./TransformControls";
