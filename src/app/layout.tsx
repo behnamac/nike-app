@@ -3,6 +3,7 @@ import { Jost } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth/context";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const jost = Jost({
   variable: "--font-jost",
@@ -25,6 +26,7 @@ export default function RootLayout({
         <AuthProvider>
           <Navbar />
           {children}
+          <Footer />
         </AuthProvider>
       </body>
     </html>
