@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import ShoeScene from "./ShoeScene";
 
 export default function HeroSection() {
   return (
@@ -41,16 +41,19 @@ export default function HeroSection() {
 
           {/* Right Section - Product and Brand Text */}
           <div className="relative order-1 lg:order-2 md:h-64 h-80 lg:h-auto">
-            {/* Main Shoe Image */}
-            <div className="relative z-20 flex justify-center items-center h-full">
-              <Image
-                src="/hero-shoe.png"
-                alt="Nike Air Jordan"
-                width={500}
-                height={500}
-                className="object-contain w-full h-full md:max-w-2xl max-w-md"
-                priority
-              />
+            {/* Brand Text "AIR" */}
+            <div className="absolute -top-4 -left-2 sm:-top-6 sm:-left-3 lg:-top-8 lg:-left-4 text-4xl sm:text-6xl lg:text-8xl font-bold text-orange-500 z-20">
+              AIR
+            </div>
+
+            {/* 3D Shoe Model */}
+            <div className="relative z-10 flex justify-center items-center h-full">
+              <ShoeScene className="w-full h-full max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-5xl" />
+            </div>
+
+            {/* Brand Text "JORDAN" */}
+            <div className="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6 lg:-bottom-8 lg:-right-8 text-3xl sm:text-5xl lg:text-9xl font-bold text-black z-20">
+              JORDAN
             </div>
 
             {/* Diagonal Pink Graphic */}
