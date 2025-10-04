@@ -4,7 +4,7 @@ import ShoeScene from "./ShoeScene";
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-pink-50 overflow-hidden">
+    <section className="relative h-[50vh] md:min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-pink-50 overflow-hidden">
       {/* Background with tropical gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-blue-50 to-pink-50">
         <div className="absolute inset-0 bg-[url('/hero-bg.png')] bg-cover bg-center opacity-60"></div>
@@ -28,15 +28,14 @@ export default function HeroSection() {
       <div className="absolute inset-0 w-full h-full z-10 lg:hidden">
         <div className="w-full h-full flex">
           {/* Left side - empty space for text */}
-          <div className="w-1/2 h-full"></div>
           {/* Right side - Static image */}
-          <div className="w-1/2 h-full flex justify-center items-center">
+          <div className="w-full h-full flex justify-center items-center">
             <Image
               src="/hero-shoe.png"
               alt="Nike Air Jordan"
               width={400}
               height={400}
-              className="object-contain w-full h-full max-w-sm"
+              className="object-contain w-2/3 h-full"
               priority
             />
           </div>
@@ -48,7 +47,7 @@ export default function HeroSection() {
         <div className="container mx-auto px-6 md:px-2 py-12 lg:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[70vh] lg:min-h-[80vh]">
             {/* Left Section - Text Content */}
-            <div className="space-y-4 sm:space-y-6 lg:space-y-8 order-2 lg:order-1">
+            <div className="lg:space-y-4 space-y- lg:order-1">
               {/* Bold & Sporty tag */}
               <div className="text-pink-600 font-medium text-xs sm:text-sm tracking-wide uppercase">
                 Bold & Sporty
@@ -83,7 +82,7 @@ export default function HeroSection() {
               </div>
 
               {/* Brand Text "Hawaii" */}
-              <div className="absolute -right-4 sm:-right-6 lg:-bottom-0 lg:-right-8 text-3xl sm:text-5xl lg:text-9xl font-bold text-blue-900 z-10 drop-shadow-lg">
+              <div className="absolute md:-right-4 md:bottom-0 right-0 bottom-2 lg:-right-8 text-3xl sm:text-5xl lg:text-9xl font-bold text-blue-900 z-10 drop-shadow-lg">
                 Hawaii
               </div>
 
