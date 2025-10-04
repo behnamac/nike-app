@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import ShoeScene from "./ShoeScene";
 
 export default function HeroSection() {
@@ -9,13 +10,34 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-[url('/hero-bg.png')] bg-cover bg-center"></div>
       </div>
 
-      {/* 3D Scene - Right Side Only */}
-      <div className="absolute inset-0 w-full h-full z-[9999]">
+      {/* 3D Scene - Desktop Only */}
+      <div className="absolute inset-0 w-full h-full z-10 hidden lg:block">
         <div className="w-full h-full flex">
           {/* Left side - empty space for text */}
           <div className="w-1/2 h-full"></div>
           {/* Right side - 3D model */}
-          <ShoeScene className="w-full h-full" />
+          <div className="w-full h-full">
+            <ShoeScene className="w-full h-full" />
+          </div>
+        </div>
+      </div>
+
+      {/* Static Image - Mobile Only */}
+      <div className="absolute inset-0 w-full h-full z-10 lg:hidden">
+        <div className="w-full h-full flex">
+          {/* Left side - empty space for text */}
+          <div className="w-1/2 h-full"></div>
+          {/* Right side - Static image */}
+          <div className="w-1/2 h-full flex justify-center items-center">
+            <Image
+              src="/hero-shoe.png"
+              alt="Nike Air Jordan"
+              width={400}
+              height={400}
+              className="object-contain w-full h-full max-w-sm"
+              priority
+            />
+          </div>
         </div>
       </div>
 
