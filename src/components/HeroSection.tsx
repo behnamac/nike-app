@@ -6,13 +6,10 @@ export default function HeroSection() {
     <section className="relative min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
       {/* Background with blurred people silhouettes */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="absolute inset-0 bg-[url('/hero-bg.png')] bg-cover bg-center opacity-20 blur-sm"></div>
+        <div className="absolute inset-0 bg-[url('/hero-bg.png')] bg-cover bg-center"></div>
       </div>
 
-      {/* Light blue border */}
-      <div className="absolute inset-0 border-2 border-blue-200"></div>
-
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-20">
+      <div className="relative z-10 container mx-auto px-6 md:px-2 md:py-8 py-12 lg:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[70vh] lg:min-h-[80vh]">
           {/* Left Section - Text Content */}
           <div className="space-y-4 sm:space-y-6 lg:space-y-8 order-2 lg:order-1">
@@ -36,34 +33,24 @@ export default function HeroSection() {
             {/* CTA Button */}
             <Link
               href="/products"
-              className="inline-block bg-black text-white px-6 py-3 sm:px-8 sm:py-4 rounded-lg font-medium text-sm sm:text-base lg:text-lg hover:bg-gray-800 transition-colors duration-300 w-full sm:w-auto text-center"
+              className="inline-block bg-black text-white px-6 py-3 sm:px-8 sm:py-4 rounded-3xl font-medium text-sm sm:text-base lg:text-lg hover:bg-gray-800 transition-colors duration-300 w-full sm:w-auto text-center"
             >
               Find Your Shoe
             </Link>
           </div>
 
           {/* Right Section - Product and Brand Text */}
-          <div className="relative order-1 lg:order-2 h-64 sm:h-80 lg:h-auto">
-            {/* Brand Text "AIR" */}
-            <div className="absolute -top-4 -left-2 sm:-top-6 sm:-left-3 lg:-top-8 lg:-left-4 text-4xl sm:text-6xl lg:text-8xl font-bold text-orange-500 z-20">
-              AIR
-            </div>
-
+          <div className="relative order-1 lg:order-2 md:h-64 h-80 lg:h-auto">
             {/* Main Shoe Image */}
-            <div className="relative z-10 flex justify-center items-center h-full">
+            <div className="relative z-20 flex justify-center items-center h-full">
               <Image
                 src="/hero-shoe.png"
                 alt="Nike Air Jordan"
-                width={400}
-                height={400}
-                className="object-contain w-full h-full max-w-sm sm:max-w-md lg:max-w-lg"
+                width={500}
+                height={500}
+                className="object-contain w-full h-full md:max-w-2xl max-w-md"
                 priority
               />
-            </div>
-
-            {/* Brand Text "JORDAN" */}
-            <div className="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6 lg:-bottom-8 lg:-right-8 text-3xl sm:text-5xl lg:text-9xl font-bold text-black z-20">
-              JORDAN
             </div>
 
             {/* Diagonal Pink Graphic */}
