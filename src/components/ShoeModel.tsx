@@ -13,8 +13,8 @@ interface ShoeModelProps {
 }
 
 export default function ShoeModel({
-  scale = [3, 3, 3],
-  position = [0, 0, 0],
+  scale = [1.5, 1.5, 1.5],
+  position = [5, 0, 0],
   rotation = [0, 0, 0],
 }: ShoeModelProps) {
   const meshRef = useRef<THREE.Mesh>(null);

@@ -16,7 +16,7 @@ export default function HeroSection() {
           {/* Left side - empty space for text */}
           <div className="w-1/2 h-full"></div>
           {/* Right side - 3D model */}
-          <div className="w-full h-full">
+          <div className="w-full translate-x-20 h-full">
             <ShoeScene className="w-full h-full" />
           </div>
         </div>
