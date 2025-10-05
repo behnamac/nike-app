@@ -5,8 +5,8 @@ import Link from "next/link";
 
 export default function ReactPrestoBanner() {
   return (
-    <section className="py-12 bg-white">
-      <div className="container mx-auto px-4 ">
+    <section className="py-12">
+      <div className="container mx-auto px-4">
         {/* Mobile Layout - Stacked */}
         <div className="lg:hidden">
           {/* Text Section */}
@@ -74,7 +74,7 @@ export default function ReactPrestoBanner() {
           </div>
 
           {/* Right Section - Image */}
-          <div className="w-[50%] h-96 relative">
+          <div className="w-[50%] h-[50vh] relative">
             <Image
               src="/feature.png"
               alt="Nike React Presto"
