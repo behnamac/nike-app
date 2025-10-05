@@ -24,7 +24,7 @@ export default function ReactPrestoBanner() {
             </p>
             <Link
               href="/products"
-              className="inline-block bg-black text-white px-6 py-3 rounded-2xl font-semibold text-base hover:bg-gray-800 transition-colors duration-300"
+              className="inline-block bg-black text-white px-6 py-3 rounded-full font-semibold text-base hover:bg-gray-800 transition-colors duration-300"
             >
               Shop Now
             </Link>
