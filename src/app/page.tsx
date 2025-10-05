@@ -1,6 +1,7 @@
 import HeroSection from "@/components/HeroSection";
 import BestOfAirMax from "@/components/BestOfAirMax";
 import TrendingNow from "@/components/TrendingNow";
+import ReactPrestoBanner from "@/components/ReactPrestoBanner";
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <HeroSection />
       <BestOfAirMax />
       <TrendingNow />
+      <ReactPrestoBanner />
     </div>
   );
 }

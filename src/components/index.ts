@@ -4,6 +4,7 @@ export { default as Footer } from "./Footer";
 export { default as HeroSection } from "./HeroSection";
 export { default as BestOfAirMax } from "./BestOfAirMax";
 export { default as TrendingNow } from "./TrendingNow";
+export { default as ReactPrestoBanner } from "./ReactPrestoBanner";
 export { default as Filters } from "./Filters";
 export { default as Sort } from "./Sort";
 export { default as ShoeModel } from "./ShoeModel";
