@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function ReactPrestoBanner() {
   return (
-    <section className="py-12">
+    <section className="pb-12">
       <div className="container mx-auto px-4">
         {/* Mobile Layout - Stacked */}
         <div className="lg:hidden">
