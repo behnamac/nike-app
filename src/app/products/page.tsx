@@ -5,7 +5,6 @@ import { getAllProducts } from "@/lib/actions/product";
 import Card from "@/components/Card";
 import Filters from "@/components/Filters";
 import Sort from "@/components/Sort";
-import Footer from "@/components/Footer";
 
 interface ProductsPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -212,8 +211,6 @@ export default async function ProductsPage({
           </main>
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 }

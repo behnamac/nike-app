@@ -1,8 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { getOrderBySessionId } from "@/lib/actions/orders";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import OrderSuccess from "@/components/OrderSuccess";
 
 interface SuccessPageProps {
@@ -18,7 +16,6 @@ export default async function CheckoutSuccessPage({
   if (!sessionId) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -36,7 +33,6 @@ export default async function CheckoutSuccessPage({
             </Link>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -46,7 +42,6 @@ export default async function CheckoutSuccessPage({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Order Confirmation
@@ -96,7 +91,6 @@ export default async function CheckoutSuccessPage({
           </div>
         )}
       </div>
-      <Footer />
     </div>
   );
 }

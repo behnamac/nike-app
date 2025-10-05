@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { getCart } from "@/lib/actions/cart";
 import { getCurrentUser } from "@/lib/auth/actions";
-import Footer from "@/components/Footer";
 import CartItems from "@/components/CartItems";
 import CartSummary from "@/components/CartSummary";
 import EmptyCart from "@/components/EmptyCart";
@@ -80,8 +79,6 @@ export default async function CartPage() {
           </div>
         )}
       </div>
-
-      <Footer />
     </div>
   );
 }

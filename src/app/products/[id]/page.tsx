@@ -2,8 +2,6 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Heart, ImageOff } from "lucide-react";
 import { getProduct } from "@/lib/actions/product";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import ProductGallery from "@/components/ProductGallery";
 import SizePicker from "@/components/SizePicker";
 import CollapsibleSection from "@/components/CollapsibleSection";
@@ -25,7 +23,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!product) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center">
             <ImageOff className="w-24 h-24 mx-auto text-gray-400 mb-4" />
@@ -43,7 +40,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </Link>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -62,8 +58,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Product Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
@@ -379,8 +373,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </Suspense>
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 }
