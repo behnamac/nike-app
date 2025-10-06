@@ -29,6 +29,8 @@ export interface ProductFilters {
   sortBy?: string;
   page?: number;
   limit?: number;
+  // For mock data fallback
+  originalGenderSlugs?: string[];
 }
 
 export interface SortOption {
@@ -236,7 +238,10 @@ export function isFilterActive(
   value: string
 ): boolean {
   const currentValues = filters[filterType];
-  return Array.isArray(currentValues) && currentValues.includes(value);
+  const isActive =
+    Array.isArray(currentValues) && currentValues.includes(value);
+
+  return isActive;
 }
 
 /**
@@ -258,7 +263,6 @@ async function getGenderMapping(): Promise<Record<string, string>> {
     genderRecords.forEach((gender) => {
       mapping[gender.slug] = gender.id;
     });
-
     return mapping;
   } catch (error) {
     console.warn("Could not fetch gender mapping from database:", error);
@@ -268,14 +272,11 @@ async function getGenderMapping(): Promise<Record<string, string>> {
 
 /**
  * Fallback gender mapping for when database is not available
+ * Returns empty mapping to disable gender filtering when DB is unavailable
  */
 function getFallbackGenderMapping(): Record<string, string> {
-  return {
-    men: "men-gender-id",
-    women: "women-gender-id",
-    kids: "kids-gender-id",
-    unisex: "unisex-gender-id",
-  };
+  console.warn("Database not available, gender filtering will be disabled");
+  return {};
 }
 
 /**
@@ -286,9 +287,12 @@ async function convertGenderSlugsToIds(
   genderSlugs: string[]
 ): Promise<string[]> {
   const mapping = await getGenderMapping();
-  return genderSlugs
+  console.log("Gender mapping:", mapping);
+  const result = genderSlugs
     .map((slug) => mapping[slug])
     .filter((id): id is string => id !== undefined);
+  console.log("Converted slugs to IDs:", result);
+  return result;
 }
 
 /**
@@ -302,16 +306,23 @@ export async function parseProductFilters(
     parseNumbers: true,
   });
 
-  // Handle gender parameter - convert slugs to IDs
+  // Handle gender parameter - for now, skip gender filtering if database is not available
   const genderSlugs = Array.isArray(params.gender)
     ? params.gender.filter((v): v is string => typeof v === "string")
     : params.gender && typeof params.gender === "string"
       ? [params.gender]
       : undefined;
 
-  const genderIds = genderSlugs
-    ? await convertGenderSlugsToIds(genderSlugs)
-    : undefined;
+  // Try to get gender IDs, but if it fails, just skip gender filtering
+  let genderIds: string[] | undefined;
+  try {
+    genderIds = genderSlugs
+      ? await convertGenderSlugsToIds(genderSlugs)
+      : undefined;
+  } catch {
+    console.warn("Gender filtering not available, showing all products");
+    genderIds = undefined;
+  }
 
   return {
     search: typeof params.search === "string" ? params.search : undefined,
@@ -341,6 +352,8 @@ export async function parseProductFilters(
     sortBy: typeof params.sort === "string" ? params.sort : "created_at_desc",
     page: typeof params.page === "number" ? params.page : 1,
     limit: typeof params.limit === "number" ? params.limit : 24,
+    // Pass the original gender slugs for mock data fallback
+    originalGenderSlugs: genderSlugs,
   };
 }
 
@@ -374,27 +387,22 @@ export async function convertToFilterParams(
   if (filters.genderId && filters.genderId.length > 0) {
     try {
       const mapping = await getGenderMapping();
-      const reverseMapping: Record<string, string> = {};
-      Object.entries(mapping).forEach(([slug, id]) => {
-        reverseMapping[id] = slug;
-      });
+      if (Object.keys(mapping).length === 0) {
+        // No gender mapping available, don't show any gender as selected
+        genderSlugs = undefined;
+      } else {
+        const reverseMapping: Record<string, string> = {};
+        Object.entries(mapping).forEach(([slug, id]) => {
+          reverseMapping[id] = slug;
+        });
 
-      genderSlugs = filters.genderId
-        .map((id) => reverseMapping[id])
-        .filter((slug): slug is string => slug !== undefined);
+        genderSlugs = filters.genderId
+          .map((id) => reverseMapping[id])
+          .filter((slug): slug is string => slug !== undefined);
+      }
     } catch (error) {
       console.warn("Could not convert gender IDs to slugs:", error);
-      // Fallback: try to match against known fallback IDs
-      const fallbackMapping: Record<string, string> = {
-        "men-gender-id": "men",
-        "women-gender-id": "women",
-        "kids-gender-id": "kids",
-        "unisex-gender-id": "unisex",
-      };
-
-      genderSlugs = filters.genderId
-        .map((id) => fallbackMapping[id])
-        .filter((slug): slug is string => slug !== undefined);
+      genderSlugs = undefined;
     }
   }
 

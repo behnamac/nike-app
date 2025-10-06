@@ -2,7 +2,8 @@
 
 import { getDb } from "@/lib/db";
 import { products, productVariants } from "@/lib/db/schema";
-import { eq, like, inArray, desc, asc, sql } from "drizzle-orm";
+import { eq, like, inArray, desc, asc, sql, and } from "drizzle-orm";
+import { ProductFilters } from "@/lib/utils/query";
 
 // Type definitions
 export interface Review {
@@ -12,20 +13,6 @@ export interface Review {
   title?: string;
   content: string;
   createdAt: Date;
-}
-
-export interface ProductFilters {
-  search?: string;
-  categoryId?: string[];
-  genderId?: string[];
-  brandId?: string[];
-  colorId?: string[];
-  sizeId?: string[];
-  priceMin?: number;
-  priceMax?: number;
-  sortBy?: string;
-  page?: number;
-  limit?: number;
 }
 
 export interface ProductWithDetails {
@@ -104,53 +91,8 @@ export async function getAllProducts(
       limit = 24,
     } = filters;
 
-    // Build where conditions
-    const whereConditions = [eq(products.isPublished, true)];
-
-    // Search filter
-    if (search) {
-      whereConditions.push(like(products.name, `%${search}%`));
-    }
-
-    // Category filter
-    if (categoryId && categoryId.length > 0) {
-      whereConditions.push(inArray(products.categoryId, categoryId));
-    }
-
-    // Gender filter
-    if (genderId && genderId.length > 0) {
-      whereConditions.push(inArray(products.genderId, genderId));
-    }
-
-    // Brand filter
-    if (brandId && brandId.length > 0) {
-      whereConditions.push(inArray(products.brandId, brandId));
-    }
-
-    // Build variant conditions for SQL
-    let variantConditionsSQL = sql``;
-    const variantConditions: string[] = [];
-
-    if (priceMin !== undefined) {
-      variantConditions.push(`pv.price >= ${priceMin}`);
-    }
-    if (priceMax !== undefined) {
-      variantConditions.push(`pv.price <= ${priceMax}`);
-    }
-    if (colorId && colorId.length > 0) {
-      variantConditions.push(
-        `pv.color_id = ANY(ARRAY[${colorId.map((id) => `'${id}'`).join(",")}])`
-      );
-    }
-    if (sizeId && sizeId.length > 0) {
-      variantConditions.push(
-        `pv.size_id = ANY(ARRAY[${sizeId.map((id) => `'${id}'`).join(",")}])`
-      );
-    }
-
-    if (variantConditions.length > 0) {
-      variantConditionsSQL = sql`AND (${sql.raw(variantConditions.join(" AND "))})`;
-    }
+    // Note: Variant conditions (price, color, size) are not implemented in this version
+    // They would require additional joins and filtering logic
 
     // Build sort order
     let orderBy;
@@ -178,75 +120,94 @@ export async function getAllProducts(
 
     // Get total count for pagination
     const db = getDb();
-    const totalCountResult = await db.execute(sql`
-    SELECT COUNT(DISTINCT p.id) as count
-    FROM products p
-    LEFT JOIN product_variants pv ON p.id = pv.product_id
-    WHERE p.is_published = true
-    ${search ? sql`AND p.name ILIKE ${`%${search}%`}` : sql``}
-    ${categoryId && categoryId.length > 0 ? sql`AND p.category_id = ANY(${categoryId})` : sql``}
-    ${genderId && genderId.length > 0 ? sql`AND p.gender_id = ANY(${genderId})` : sql``}
-    ${brandId && brandId.length > 0 ? sql`AND p.brand_id = ANY(${brandId})` : sql``}
-    ${variantConditionsSQL}
-  `);
 
-    const totalCount = Number(
-      (totalCountResult.rows[0] as { count: string }).count || 0
-    );
+    // Build count query with proper conditions
+    const whereConditions = [eq(products.isPublished, true)];
+
+    if (search) {
+      whereConditions.push(like(products.name, `%${search}%`));
+    }
+    if (categoryId && categoryId.length > 0) {
+      whereConditions.push(inArray(products.categoryId, categoryId));
+    }
+    if (genderId && genderId.length > 0) {
+      whereConditions.push(inArray(products.genderId, genderId));
+    }
+    if (brandId && brandId.length > 0) {
+      whereConditions.push(inArray(products.brandId, brandId));
+    }
+
+    const totalCountResult = await db
+      .select({ count: sql<number>`count(distinct ${products.id})` })
+      .from(products)
+      .leftJoin(productVariants, eq(products.id, productVariants.productId))
+      .where(and(...whereConditions));
+
+    const totalCount = Number(totalCountResult[0]?.count || 0);
 
     // Get products with aggregated data
     const offset = (page - 1) * limit;
 
-    const productsQuery = await db.execute(sql`
-    SELECT 
-      p.id,
-      p.name,
-      p.description,
-      p.category_id,
-      p.gender_id,
-      p.brand_id,
-      p.is_published,
-      p.default_variant_id,
-      p.created_at,
-      p.updated_at,
-      MIN(pv.price) as min_price,
-      MAX(pv.price) as max_price,
-      c.id as category_rel_id,
-      c.name as category_name,
-      c.slug as category_slug,
-      g.id as gender_rel_id,
-      g.label as gender_label,
-      g.slug as gender_slug,
-      b.id as brand_rel_id,
-      b.name as brand_name,
-      b.slug as brand_slug,
-      (
-        SELECT pi.url
-        FROM product_images pi
-        WHERE pi.product_id = p.id
-        AND pi.is_primary = true
-        LIMIT 1
-      ) as primary_image
-    FROM products p
-    LEFT JOIN product_variants pv ON p.id = pv.product_id
-    LEFT JOIN categories c ON p.category_id = c.id
-    LEFT JOIN genders g ON p.gender_id = g.id
-    LEFT JOIN brands b ON p.brand_id = b.id
-    WHERE p.is_published = true
-    ${search ? sql`AND p.name ILIKE ${`%${search}%`}` : sql``}
-    ${categoryId && categoryId.length > 0 ? sql`AND p.category_id = ANY(${categoryId})` : sql``}
-    ${genderId && genderId.length > 0 ? sql`AND p.gender_id = ANY(${genderId})` : sql``}
-    ${brandId && brandId.length > 0 ? sql`AND p.brand_id = ANY(${brandId})` : sql``}
-    ${variantConditionsSQL}
-    GROUP BY p.id, c.id, g.id, b.id
-    ORDER BY ${orderBy}
-    LIMIT ${limit} OFFSET ${offset}
-  `);
+    // Build products query with proper conditions
+    const productsWhereConditions = [eq(products.isPublished, true)];
+
+    if (search) {
+      productsWhereConditions.push(like(products.name, `%${search}%`));
+    }
+    if (categoryId && categoryId.length > 0) {
+      productsWhereConditions.push(inArray(products.categoryId, categoryId));
+    }
+    if (genderId && genderId.length > 0) {
+      productsWhereConditions.push(inArray(products.genderId, genderId));
+    }
+    if (brandId && brandId.length > 0) {
+      productsWhereConditions.push(inArray(products.brandId, brandId));
+    }
+
+    const productsResult = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        description: products.description,
+        categoryId: products.categoryId,
+        genderId: products.genderId,
+        brandId: products.brandId,
+        isPublished: products.isPublished,
+        defaultVariantId: products.defaultVariantId,
+        createdAt: products.createdAt,
+        updatedAt: products.updatedAt,
+        minPrice: sql<number>`MIN(${productVariants.price})`,
+        maxPrice: sql<number>`MAX(${productVariants.price})`,
+        categoryRelId: sql<string>`c.id`,
+        categoryName: sql<string>`c.name`,
+        categorySlug: sql<string>`c.slug`,
+        genderRelId: sql<string>`g.id`,
+        genderLabel: sql<string>`g.label`,
+        genderSlug: sql<string>`g.slug`,
+        brandRelId: sql<string>`b.id`,
+        brandName: sql<string>`b.name`,
+        brandSlug: sql<string>`b.slug`,
+        primaryImage: sql<string>`(
+          SELECT pi.url
+          FROM product_images pi
+          WHERE pi.product_id = p.id
+          AND pi.is_primary = true
+          LIMIT 1
+        )`,
+      })
+      .from(products)
+      .leftJoin(productVariants, eq(products.id, productVariants.productId))
+      .leftJoin(sql`categories c`, eq(products.categoryId, sql`c.id`))
+      .leftJoin(sql`genders g`, eq(products.genderId, sql`g.id`))
+      .leftJoin(sql`brands b`, eq(products.brandId, sql`b.id`))
+      .where(and(...productsWhereConditions))
+      .groupBy(products.id, sql`c.id`, sql`g.id`, sql`b.id`)
+      .orderBy(orderBy)
+      .limit(limit)
+      .offset(offset);
 
     // Get images for each product
-    const productIds = productsQuery.rows.map(
-      (row: Record<string, unknown>) => row.id as string
-    );
+    const productIds = productsResult.map((row) => row.id);
     const imagesQuery =
       productIds.length > 0
         ? await db.execute(sql`
@@ -276,62 +237,60 @@ export async function getAllProducts(
     });
 
     // Build final result
-    const result: ProductWithDetails[] = productsQuery.rows.map(
-      (row: Record<string, unknown>) => {
-        const productImages = imagesByProduct.get(row.id as string) || [];
+    const result: ProductWithDetails[] = productsResult.map((row) => {
+      const productImages = imagesByProduct.get(row.id) || [];
 
-        // If color filter is applied, prioritize color-specific images
-        let topImages = productImages;
-        if (colorId && colorId.length > 0) {
-          const colorSpecificImages = productImages.filter(
-            (img) =>
-              img.variant_id &&
-              img.color_id &&
-              colorId.includes(img.color_id as string)
-          );
-          if (colorSpecificImages.length > 0) {
-            topImages = colorSpecificImages;
-          }
+      // If color filter is applied, prioritize color-specific images
+      let topImages = productImages;
+      if (colorId && colorId.length > 0) {
+        const colorSpecificImages = productImages.filter(
+          (img) =>
+            img.variant_id &&
+            img.color_id &&
+            colorId.includes(img.color_id as string)
+        );
+        if (colorSpecificImages.length > 0) {
+          topImages = colorSpecificImages;
         }
-
-        return {
-          id: row.id as string,
-          name: row.name as string,
-          description: row.description as string | null,
-          categoryId: row.category_id as string,
-          genderId: row.gender_id as string,
-          brandId: row.brand_id as string,
-          isPublished: row.is_published as boolean,
-          defaultVariantId: row.default_variant_id as string | null,
-          createdAt: row.created_at as Date,
-          updatedAt: row.updated_at as Date,
-          minPrice: Number(row.min_price),
-          maxPrice: Number(row.max_price),
-          primaryImage: row.primary_image as string | null,
-          category: {
-            id: row.category_rel_id as string,
-            name: row.category_name as string,
-            slug: row.category_slug as string,
-          },
-          gender: {
-            id: row.gender_rel_id as string,
-            label: row.gender_label as string,
-            slug: row.gender_slug as string,
-          },
-          brand: {
-            id: row.brand_rel_id as string,
-            name: row.brand_name as string,
-            slug: row.brand_slug as string,
-          },
-          images: topImages.slice(0, 5).map((img) => ({
-            id: img.id as string,
-            url: img.url as string,
-            isPrimary: img.is_primary as boolean,
-            sortOrder: img.sort_order as number,
-          })),
-        };
       }
-    );
+
+      return {
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        categoryId: row.categoryId,
+        genderId: row.genderId,
+        brandId: row.brandId,
+        isPublished: row.isPublished,
+        defaultVariantId: row.defaultVariantId,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        minPrice: Number(row.minPrice),
+        maxPrice: Number(row.maxPrice),
+        primaryImage: row.primaryImage,
+        category: {
+          id: row.categoryRelId,
+          name: row.categoryName,
+          slug: row.categorySlug,
+        },
+        gender: {
+          id: row.genderRelId,
+          label: row.genderLabel,
+          slug: row.genderSlug,
+        },
+        brand: {
+          id: row.brandRelId,
+          name: row.brandName,
+          slug: row.brandSlug,
+        },
+        images: topImages.slice(0, 5).map((img) => ({
+          id: img.id as string,
+          url: img.url as string,
+          isPrimary: img.is_primary as boolean,
+          sortOrder: img.sort_order as number,
+        })),
+      };
+    });
 
     return {
       products: result,
@@ -594,6 +553,8 @@ async function getMockProducts(
   // Import mock data
   const { mockProducts } = await import("@/lib/data/mock-products");
 
+  console.log("Mock data filtering with filters:", filters);
+
   // Simple filtering logic for mock data
   let filteredProducts = mockProducts;
 
@@ -610,8 +571,66 @@ async function getMockProducts(
   }
 
   if (filters.genderId && filters.genderId.length > 0) {
-    filteredProducts = filteredProducts.filter((product) =>
-      filters.genderId!.includes(product.gender)
+    console.log("Mock data gender filter - genderId:", filters.genderId);
+    console.log(
+      "Mock data gender filter - originalGenderSlugs:",
+      filters.originalGenderSlugs
+    );
+
+    // For mock data, we need to convert database IDs back to gender slugs
+    // Since we don't have access to the database mapping in mock mode,
+    // we'll use a simple approach: check if the ID contains the gender name
+    const genderSlugs: string[] = [];
+
+    for (const id of filters.genderId) {
+      // Check if the ID contains gender indicators
+      if (id.includes("men") || id.toLowerCase().includes("men")) {
+        genderSlugs.push("men");
+      } else if (id.includes("women") || id.toLowerCase().includes("women")) {
+        genderSlugs.push("women");
+      } else if (id.includes("kids") || id.toLowerCase().includes("kids")) {
+        genderSlugs.push("kids");
+      } else {
+        // If it's already a slug (like 'men', 'women', 'kids'), use it directly
+        genderSlugs.push(id);
+      }
+    }
+
+    console.log("Mock data gender filter - converted slugs:", genderSlugs);
+    console.log(
+      "Mock data gender filter - available genders in mock data:",
+      mockProducts.map((p) => p.gender)
+    );
+
+    // If no conversion happened (UUIDs don't contain gender words),
+    // use the original gender slugs
+    if (genderSlugs.length === 0 || genderSlugs[0] === filters.genderId[0]) {
+      console.log("No gender conversion possible, using original gender slugs");
+
+      // For mock data, use the original gender slugs from the URL
+      if (
+        filters.originalGenderSlugs &&
+        filters.originalGenderSlugs.length > 0
+      ) {
+        console.log("Using originalGenderSlugs:", filters.originalGenderSlugs);
+        filteredProducts = filteredProducts.filter((product) =>
+          filters.originalGenderSlugs!.includes(product.gender)
+        );
+      } else {
+        // No gender slugs available, show all products
+        console.log(
+          "Mock data gender filter - showing all products due to UUID mismatch"
+        );
+      }
+    } else {
+      filteredProducts = filteredProducts.filter((product) =>
+        genderSlugs.includes(product.gender)
+      );
+    }
+
+    console.log(
+      "Mock data gender filter - filtered products count:",
+      filteredProducts.length
     );
   }
 

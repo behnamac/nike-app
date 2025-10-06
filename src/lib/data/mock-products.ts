@@ -450,6 +450,141 @@ export const mockProducts: Product[] = [
       },
     ],
   },
+  // Additional Women's Products
+  {
+    id: "13",
+    name: "Nike Air Max 270 Women's",
+    description:
+      "The Nike Air Max 270 delivers visible cushioning under every step with a fresh array of colors.",
+    category: "running",
+    gender: "women",
+    brand: "Nike",
+    isPublished: true,
+    defaultVariantId: "13-1",
+    createdAt: new Date("2024-03-15"),
+    updatedAt: new Date("2024-03-15"),
+    variants: [
+      {
+        id: "13-1",
+        sku: "NIKE-AM270-W-PINK-8",
+        price: 98.3,
+        color: "white",
+        size: "8",
+        inStock: 20,
+        weight: 0.7,
+        dimensions: { length: 30, width: 20, height: 12 },
+      },
+    ],
+    images: [
+      {
+        id: "13-1",
+        url: "/shoes/shoe-13.avif",
+        sortOrder: 0,
+        isPrimary: true,
+      },
+    ],
+  },
+  {
+    id: "14",
+    name: "Nike React Element 55 Women's",
+    description:
+      "The Nike React Element 55 delivers a bold, futuristic design that's ready for the street.",
+    category: "lifestyle",
+    gender: "women",
+    brand: "Nike",
+    isPublished: true,
+    defaultVariantId: "14-1",
+    createdAt: new Date("2024-03-20"),
+    updatedAt: new Date("2024-03-20"),
+    variants: [
+      {
+        id: "14-1",
+        sku: "NIKE-REACT-E55-W-BLUE-8",
+        price: 78.3,
+        salePrice: 70.47,
+        color: "blue",
+        size: "8",
+        inStock: 18,
+        weight: 0.6,
+        dimensions: { length: 30, width: 20, height: 11 },
+      },
+    ],
+    images: [
+      {
+        id: "14-1",
+        url: "/shoes/shoe-14.avif",
+        sortOrder: 0,
+        isPrimary: true,
+      },
+    ],
+  },
+  // Kids' Products
+  {
+    id: "15",
+    name: "Nike Air Max 270 Kids",
+    description:
+      "The Nike Air Max 270 Kids delivers visible cushioning with a fun, colorful design.",
+    category: "sneakers",
+    gender: "kids",
+    brand: "Nike",
+    isPublished: true,
+    defaultVariantId: "15-1",
+    createdAt: new Date("2024-03-25"),
+    updatedAt: new Date("2024-03-25"),
+    variants: [
+      {
+        id: "15-1",
+        sku: "NIKE-AM270-K-GREEN-4",
+        price: 68.3,
+        color: "green",
+        size: "4",
+        inStock: 25,
+        weight: 0.4,
+        dimensions: { length: 25, width: 16, height: 9 },
+      },
+    ],
+    images: [
+      {
+        id: "15-1",
+        url: "/shoes/shoe-15.avif",
+        sortOrder: 0,
+        isPrimary: true,
+      },
+    ],
+  },
+  {
+    id: "16",
+    name: "Nike Air Force 1 Kids",
+    description:
+      "The Nike Air Force 1 Kids delivers the classic basketball design in kid-friendly sizes.",
+    category: "sneakers",
+    gender: "kids",
+    brand: "Nike",
+    isPublished: true,
+    defaultVariantId: "16-1",
+    createdAt: new Date("2024-03-30"),
+    updatedAt: new Date("2024-03-30"),
+    variants: [
+      {
+        id: "16-1",
+        sku: "NIKE-AF1-K-WHITE-5",
+        price: 58.3,
+        color: "white",
+        size: "5",
+        inStock: 30,
+        weight: 0.4,
+        dimensions: { length: 26, width: 17, height: 10 },
+      },
+    ],
+    images: [
+      {
+        id: "16-1",
+        url: "/shoes/shoe-1.jpg",
+        sortOrder: 0,
+        isPrimary: true,
+      },
+    ],
+  },
 ];
 
 export function filterProducts(products: Product[], filters: FilterParams) {

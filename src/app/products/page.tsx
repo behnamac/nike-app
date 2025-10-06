@@ -38,7 +38,7 @@ export default async function ProductsPage({
   const { products: sortedProducts } = await getAllProducts(filters);
 
   // Get active filter count for display
-  const activeFilterCount = Object.values(filters).filter((value) => {
+  const activeFilterCount = Object.values(sidebarFilters).filter((value) => {
     if (Array.isArray(value)) return value.length > 0;
     return value !== undefined && value !== null && value !== "";
   }).length;
@@ -95,12 +95,12 @@ export default async function ProductsPage({
             {activeFilterCount > 0 && (
               <div className="mb-6">
                 <div className="flex flex-wrap gap-2">
-                  {filters.genderId?.map((genderId) => (
+                  {sidebarFilters.gender?.map((genderSlug) => (
                     <span
-                      key={genderId}
+                      key={genderSlug}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
                     >
-                      Gender: {genderId}
+                      Gender: {genderSlug}
                     </span>
                   ))}
                   {filters.colorId?.map((colorId) => (
