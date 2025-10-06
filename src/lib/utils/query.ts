@@ -1,4 +1,6 @@
 import queryString from "query-string";
+import { getDb } from "@/lib/db";
+import { genders } from "@/lib/db/schema";
 
 export interface FilterParams {
   search?: string;
@@ -238,15 +240,78 @@ export function isFilterActive(
 }
 
 /**
+ * Get gender mapping from database
+ * This function fetches the actual gender IDs from the database
+ */
+async function getGenderMapping(): Promise<Record<string, string>> {
+  try {
+    // Check if DATABASE_URL is available
+    if (!process.env.DATABASE_URL) {
+      console.warn("DATABASE_URL not found, using fallback gender mapping");
+      return getFallbackGenderMapping();
+    }
+
+    const db = getDb();
+    const genderRecords = await db.select().from(genders);
+    const mapping: Record<string, string> = {};
+
+    genderRecords.forEach((gender) => {
+      mapping[gender.slug] = gender.id;
+    });
+
+    return mapping;
+  } catch (error) {
+    console.warn("Could not fetch gender mapping from database:", error);
+    return getFallbackGenderMapping();
+  }
+}
+
+/**
+ * Fallback gender mapping for when database is not available
+ */
+function getFallbackGenderMapping(): Record<string, string> {
+  return {
+    men: "men-gender-id",
+    women: "women-gender-id",
+    kids: "kids-gender-id",
+    unisex: "unisex-gender-id",
+  };
+}
+
+/**
+ * Convert gender slugs to gender IDs
+ * This function maps gender slugs from URL parameters to actual database IDs
+ */
+async function convertGenderSlugsToIds(
+  genderSlugs: string[]
+): Promise<string[]> {
+  const mapping = await getGenderMapping();
+  return genderSlugs
+    .map((slug) => mapping[slug])
+    .filter((id): id is string => id !== undefined);
+}
+
+/**
  * Parse URL search params into ProductFilters for database queries
  */
-export function parseProductFilters(
+export async function parseProductFilters(
   searchParams: URLSearchParams
-): ProductFilters {
+): Promise<ProductFilters> {
   const params = queryString.parse(searchParams.toString(), {
     arrayFormat: "bracket",
     parseNumbers: true,
   });
+
+  // Handle gender parameter - convert slugs to IDs
+  const genderSlugs = Array.isArray(params.gender)
+    ? params.gender.filter((v): v is string => typeof v === "string")
+    : params.gender && typeof params.gender === "string"
+      ? [params.gender]
+      : undefined;
+
+  const genderIds = genderSlugs
+    ? await convertGenderSlugsToIds(genderSlugs)
+    : undefined;
 
   return {
     search: typeof params.search === "string" ? params.search : undefined,
@@ -255,11 +320,7 @@ export function parseProductFilters(
       : params.category && typeof params.category === "string"
         ? [params.category]
         : undefined,
-    genderId: Array.isArray(params.gender)
-      ? params.gender.filter((v): v is string => typeof v === "string")
-      : params.gender && typeof params.gender === "string"
-        ? [params.gender]
-        : undefined,
+    genderId: genderIds,
     brandId: Array.isArray(params.brand)
       ? params.brand.filter((v): v is string => typeof v === "string")
       : params.brand && typeof params.brand === "string"

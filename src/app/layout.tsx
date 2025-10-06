@@ -22,7 +22,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${jost.className} antialiased`}>
+      <body
+        className={`${jost.className} antialiased`}
+        suppressHydrationWarning={true}
+      >
         <AuthProvider>
           <Navbar />
           {children}

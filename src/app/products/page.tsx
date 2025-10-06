@@ -29,7 +29,7 @@ export default async function ProductsPage({
   });
 
   // Parse filters from URL
-  const filters = parseProductFilters(urlSearchParams);
+  const filters = await parseProductFilters(urlSearchParams);
 
   // Fetch products from database
   const { products: sortedProducts } = await getAllProducts(filters);
@@ -199,12 +199,12 @@ export default async function ProductsPage({
                   <p className="text-gray-500 mb-4">
                     Try adjusting your filters to see more products.
                   </p>
-                  <button
-                    onClick={() => (window.location.href = "/products")}
+                  <Link
+                    href="/products"
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
                   >
                     Clear all filters
-                  </button>
+                  </Link>
                 </div>
               </div>
             )}

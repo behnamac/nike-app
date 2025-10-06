@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { products, productVariants } from "@/lib/db/schema";
 import { eq, like, inArray, desc, asc, sql } from "drizzle-orm";
 
@@ -83,6 +83,7 @@ export async function getAllProducts(
   // Check if database is available, fallback to mock data if not
   try {
     // Test database connection
+    const db = getDb();
     await db.execute(sql`SELECT 1`);
   } catch (error) {
     console.warn("Database not available, using mock data:", error);
@@ -176,6 +177,7 @@ export async function getAllProducts(
     }
 
     // Get total count for pagination
+    const db = getDb();
     const totalCountResult = await db.execute(sql`
     SELECT COUNT(DISTINCT p.id) as count
     FROM products p
@@ -348,6 +350,7 @@ export async function getAllProducts(
 export async function getProduct(productId: string) {
   try {
     // Test database connection
+    const db = getDb();
     await db.execute(sql`SELECT 1`);
   } catch (error) {
     console.warn("Database not available, using mock data:", error);
@@ -355,6 +358,7 @@ export async function getProduct(productId: string) {
   }
 
   try {
+    const db = getDb();
     const productQuery = await db.execute(sql`
       SELECT 
         p.*,
@@ -436,6 +440,7 @@ export async function getProduct(productId: string) {
 export async function getProductReviews(productId: string): Promise<Review[]> {
   try {
     // Test database connection
+    const db = getDb();
     await db.execute(sql`SELECT 1`);
   } catch (error) {
     console.warn("Database not available, returning empty reviews:", error);
@@ -443,6 +448,7 @@ export async function getProductReviews(productId: string): Promise<Review[]> {
   }
 
   try {
+    const db = getDb();
     const reviewsResult = await db.execute(sql`
       SELECT 
         r.id,
@@ -481,6 +487,7 @@ export async function getRecommendedProducts(
 ): Promise<ProductWithDetails[]> {
   try {
     // Test database connection
+    const db = getDb();
     await db.execute(sql`SELECT 1`);
   } catch (error) {
     console.warn(
@@ -492,6 +499,7 @@ export async function getRecommendedProducts(
 
   try {
     // Get products in the same category/brand/gender, excluding current product
+    const db = getDb();
     const recommendedResult = await db.execute(sql`
       SELECT 
         p.id,
