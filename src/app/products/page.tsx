@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { parseProductFilters } from "@/lib/utils/query";
+import { parseProductFilters, convertToFilterParams } from "@/lib/utils/query";
 import { getAllProducts } from "@/lib/actions/product";
 import Card from "@/components/Card";
 import Filters from "@/components/Filters";
@@ -31,6 +31,9 @@ export default async function ProductsPage({
   // Parse filters from URL
   const filters = await parseProductFilters(urlSearchParams);
 
+  // Convert ProductFilters to FilterParams for the sidebar
+  const sidebarFilters = await convertToFilterParams(filters);
+
   // Fetch products from database
   const { products: sortedProducts } = await getAllProducts(filters);
 
@@ -52,7 +55,7 @@ export default async function ProductsPage({
                   <div className="animate-pulse bg-gray-200 h-96 rounded-lg" />
                 }
               >
-                <Filters initialFilters={filters} />
+                <Filters initialFilters={sidebarFilters} />
               </Suspense>
             </div>
           </aside>

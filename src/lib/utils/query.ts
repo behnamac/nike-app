@@ -345,7 +345,7 @@ export async function parseProductFilters(
 }
 
 /**
- * Convert legacy FilterParams to ProductFilters
+ * Convert FilterParams to ProductFilters
  */
 export function convertToProductFilters(filters: FilterParams): ProductFilters {
   return {
@@ -360,5 +360,56 @@ export function convertToProductFilters(filters: FilterParams): ProductFilters {
     sortBy: filters.sort || "created_at_desc",
     page: filters.page || 1,
     limit: filters.limit || 24,
+  };
+}
+
+/**
+ * Convert ProductFilters to FilterParams for sidebar display
+ */
+export async function convertToFilterParams(
+  filters: ProductFilters
+): Promise<FilterParams> {
+  // Convert gender IDs back to slugs
+  let genderSlugs: string[] | undefined;
+  if (filters.genderId && filters.genderId.length > 0) {
+    try {
+      const mapping = await getGenderMapping();
+      const reverseMapping: Record<string, string> = {};
+      Object.entries(mapping).forEach(([slug, id]) => {
+        reverseMapping[id] = slug;
+      });
+
+      genderSlugs = filters.genderId
+        .map((id) => reverseMapping[id])
+        .filter((slug): slug is string => slug !== undefined);
+    } catch (error) {
+      console.warn("Could not convert gender IDs to slugs:", error);
+      // Fallback: try to match against known fallback IDs
+      const fallbackMapping: Record<string, string> = {
+        "men-gender-id": "men",
+        "women-gender-id": "women",
+        "kids-gender-id": "kids",
+        "unisex-gender-id": "unisex",
+      };
+
+      genderSlugs = filters.genderId
+        .map((id) => fallbackMapping[id])
+        .filter((slug): slug is string => slug !== undefined);
+    }
+  }
+
+  return {
+    search: filters.search,
+    gender: genderSlugs,
+    size: filters.sizeId,
+    color: filters.colorId,
+    price:
+      filters.priceMin && filters.priceMax
+        ? [`${filters.priceMin}-${filters.priceMax}`]
+        : undefined,
+    category: filters.categoryId,
+    brand: filters.brandId,
+    sort: filters.sortBy,
+    page: filters.page,
   };
 }
