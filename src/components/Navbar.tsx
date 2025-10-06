@@ -66,12 +66,12 @@ export default function Navbar() {
               >
                 Collections
               </a>
-              <a
-                href="#"
+              <Link
+                href="/contact"
                 className="text-gray-900 hover:text-gray-700 px-3 py-2 text-sm font-medium transition-colors"
               >
                 Contact
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -183,12 +183,12 @@ export default function Navbar() {
           >
             Collections
           </a>
-          <a
-            href="#"
+          <Link
+            href="/contact"
             className="text-gray-900 hover:text-gray-700 block px-3 py-2 text-base font-medium"
           >
             Contact
-          </a>
+          </Link>
           <div className="border-t border-gray-200 pt-4">
             <a
               href="#"
