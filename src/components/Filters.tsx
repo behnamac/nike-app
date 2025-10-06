@@ -44,9 +44,6 @@ export default function Filters({ initialFilters }: FiltersProps) {
       }
     });
 
-    console.log("Filters updateURL - newFilters:", newFilters);
-    console.log("Filters updateURL - params:", params.toString());
-
     const queryString = params.toString();
     const newURL = queryString ? `/products?${queryString}` : "/products";
 

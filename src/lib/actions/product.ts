@@ -553,9 +553,6 @@ async function getMockProducts(
   // Import mock data
   const { mockProducts } = await import("@/lib/data/mock-products");
 
-  console.log("Mock data filtering with filters:", filters);
-  console.log("Mock data filtering - sizeId:", filters.sizeId);
-
   // Simple filtering logic for mock data
   let filteredProducts = mockProducts;
 
@@ -572,12 +569,6 @@ async function getMockProducts(
   }
 
   if (filters.genderId && filters.genderId.length > 0) {
-    console.log("Mock data gender filter - genderId:", filters.genderId);
-    console.log(
-      "Mock data gender filter - originalGenderSlugs:",
-      filters.originalGenderSlugs
-    );
-
     // For mock data, we need to convert database IDs back to gender slugs
     // Since we don't have access to the database mapping in mock mode,
     // we'll use a simple approach: check if the ID contains the gender name
@@ -599,42 +590,25 @@ async function getMockProducts(
       }
     }
 
-    console.log("Mock data gender filter - converted slugs:", genderSlugs);
-    console.log(
-      "Mock data gender filter - available genders in mock data:",
-      mockProducts.map((p) => p.gender)
-    );
-
     // If no conversion happened (UUIDs don't contain gender words),
     // use the original gender slugs
     if (genderSlugs.length === 0 || genderSlugs[0] === filters.genderId[0]) {
-      console.log("No gender conversion possible, using original gender slugs");
-
       // For mock data, use the original gender slugs from the URL
       if (
         filters.originalGenderSlugs &&
         filters.originalGenderSlugs.length > 0
       ) {
-        console.log("Using originalGenderSlugs:", filters.originalGenderSlugs);
         filteredProducts = filteredProducts.filter((product) =>
           filters.originalGenderSlugs!.includes(product.gender)
         );
       } else {
         // No gender slugs available, show all products
-        console.log(
-          "Mock data gender filter - showing all products due to UUID mismatch"
-        );
       }
     } else {
       filteredProducts = filteredProducts.filter((product) =>
         genderSlugs.includes(product.gender)
       );
     }
-
-    console.log(
-      "Mock data gender filter - filtered products count:",
-      filteredProducts.length
-    );
   }
 
   if (filters.brandId && filters.brandId.length > 0) {
@@ -645,26 +619,13 @@ async function getMockProducts(
 
   // Size filter
   if (filters.sizeId && filters.sizeId.length > 0) {
-    console.log("Mock data size filter - sizeId:", filters.sizeId);
     filteredProducts = filteredProducts.filter((product) => {
       const productSizes = product.variants.map((v) => v.size);
       const hasMatchingSize = filters.sizeId!.some((size) =>
         productSizes.includes(size)
       );
-      console.log(
-        `Product ${product.name} sizes:`,
-        productSizes,
-        "Filter sizes:",
-        filters.sizeId,
-        "Match:",
-        hasMatchingSize
-      );
       return hasMatchingSize;
     });
-    console.log(
-      "Mock data size filter - filtered products count:",
-      filteredProducts.length
-    );
   }
 
   // Simple sorting

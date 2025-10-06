@@ -303,8 +303,6 @@ export async function parseProductFilters(
     parseNumbers: false, // Don't parse numbers to keep size as string
   });
 
-  console.log("parseProductFilters - URL params:", params);
-
   // Handle gender parameter - for now, skip gender filtering if database is not available
   const genderSlugs = Array.isArray(params.gender)
     ? params.gender.filter((v): v is string => typeof v === "string")
