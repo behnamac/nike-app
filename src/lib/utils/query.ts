@@ -55,15 +55,12 @@ export const FILTER_OPTIONS = {
     { value: "unisex", label: "Unisex" },
   ],
   size: [
+    { value: "4", label: "4" },
+    { value: "5", label: "5" },
     { value: "8", label: "8" },
-    { value: "8.5", label: "8.5" },
     { value: "9", label: "9" },
-    { value: "9.5", label: "9.5" },
     { value: "10", label: "10" },
-    { value: "10.5", label: "10.5" },
     { value: "11", label: "11" },
-    { value: "11.5", label: "11.5" },
-    { value: "12", label: "12" },
   ],
   color: [
     { value: "black", label: "Black" },
@@ -303,8 +300,10 @@ export async function parseProductFilters(
 ): Promise<ProductFilters> {
   const params = queryString.parse(searchParams.toString(), {
     arrayFormat: "bracket",
-    parseNumbers: true,
+    parseNumbers: false, // Don't parse numbers to keep size as string
   });
+
+  console.log("parseProductFilters - URL params:", params);
 
   // Handle gender parameter - for now, skip gender filtering if database is not available
   const genderSlugs = Array.isArray(params.gender)
@@ -344,8 +343,9 @@ export async function parseProductFilters(
         : undefined,
     sizeId: Array.isArray(params.size)
       ? params.size.filter((v): v is string => typeof v === "string")
-      : params.size && typeof params.size === "string"
-        ? [params.size]
+      : params.size &&
+          (typeof params.size === "string" || typeof params.size === "number")
+        ? [String(params.size)]
         : undefined,
     priceMin: typeof params.priceMin === "number" ? params.priceMin : undefined,
     priceMax: typeof params.priceMax === "number" ? params.priceMax : undefined,
@@ -388,8 +388,8 @@ export async function convertToFilterParams(
     try {
       const mapping = await getGenderMapping();
       if (Object.keys(mapping).length === 0) {
-        // No gender mapping available, don't show any gender as selected
-        genderSlugs = undefined;
+        // No gender mapping available, use original gender slugs if available
+        genderSlugs = filters.originalGenderSlugs;
       } else {
         const reverseMapping: Record<string, string> = {};
         Object.entries(mapping).forEach(([slug, id]) => {
@@ -402,7 +402,8 @@ export async function convertToFilterParams(
       }
     } catch (error) {
       console.warn("Could not convert gender IDs to slugs:", error);
-      genderSlugs = undefined;
+      // Fallback to original gender slugs
+      genderSlugs = filters.originalGenderSlugs;
     }
   }
 

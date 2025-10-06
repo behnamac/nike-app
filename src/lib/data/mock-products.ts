@@ -585,6 +585,137 @@ export const mockProducts: Product[] = [
       },
     ],
   },
+  // Add unisex products
+  {
+    id: "17",
+    name: "Nike Air Force 1 Unisex",
+    description:
+      "The radiance lives on in the Air Force 1, the basketball original that puts a fresh spin on what you know best.",
+    category: "sneakers",
+    gender: "unisex",
+    brand: "Nike",
+    isPublished: true,
+    defaultVariantId: "17-1",
+    createdAt: new Date("2024-01-16"),
+    updatedAt: new Date("2024-01-16"),
+    variants: [
+      {
+        id: "17-1",
+        sku: "AF1-UNISEX-001",
+        price: 90.0,
+        color: "white",
+        size: "9",
+        inStock: 20,
+        weight: 0.6,
+        dimensions: {
+          length: 30,
+          width: 12,
+          height: 8,
+        },
+      },
+      {
+        id: "17-2",
+        sku: "AF1-UNISEX-002",
+        price: 90.0,
+        color: "black",
+        size: "9",
+        inStock: 15,
+        weight: 0.6,
+        dimensions: {
+          length: 30,
+          width: 12,
+          height: 8,
+        },
+      },
+      {
+        id: "17-3",
+        sku: "AF1-UNISEX-003",
+        price: 90.0,
+        color: "white",
+        size: "10",
+        inStock: 18,
+        weight: 0.6,
+        dimensions: {
+          length: 30,
+          width: 12,
+          height: 8,
+        },
+      },
+    ],
+    images: [
+      {
+        id: "17-1",
+        url: "/shoes/shoe-1.jpg",
+        sortOrder: 1,
+        isPrimary: true,
+      },
+    ],
+  },
+  {
+    id: "18",
+    name: "Nike Dunk Low Unisex",
+    description:
+      "The Nike Dunk Low delivers a classic look with a modern feel. This unisex style features a low-top design.",
+    category: "sneakers",
+    gender: "unisex",
+    brand: "Nike",
+    isPublished: true,
+    defaultVariantId: "18-1",
+    createdAt: new Date("2024-01-17"),
+    updatedAt: new Date("2024-01-17"),
+    variants: [
+      {
+        id: "18-1",
+        sku: "DUNK-UNISEX-001",
+        price: 85.0,
+        color: "white",
+        size: "8",
+        inStock: 22,
+        weight: 0.5,
+        dimensions: {
+          length: 28,
+          width: 11,
+          height: 7,
+        },
+      },
+      {
+        id: "18-2",
+        sku: "DUNK-UNISEX-002",
+        price: 85.0,
+        color: "red",
+        size: "8",
+        inStock: 16,
+        weight: 0.5,
+        dimensions: {
+          length: 28,
+          width: 11,
+          height: 7,
+        },
+      },
+      {
+        id: "18-3",
+        sku: "DUNK-UNISEX-003",
+        price: 85.0,
+        color: "blue",
+        size: "11",
+        inStock: 14,
+        weight: 0.5,
+        dimensions: {
+          length: 28,
+          width: 11,
+          height: 7,
+        },
+      },
+    ],
+    images: [
+      {
+        id: "18-1",
+        url: "/shoes/shoe-2.webp",
+        sortOrder: 1,
+        isPrimary: true,
+      },
+    ],
+  },
 ];
 
 export function filterProducts(products: Product[], filters: FilterParams) {

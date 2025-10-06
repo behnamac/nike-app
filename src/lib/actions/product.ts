@@ -554,6 +554,7 @@ async function getMockProducts(
   const { mockProducts } = await import("@/lib/data/mock-products");
 
   console.log("Mock data filtering with filters:", filters);
+  console.log("Mock data filtering - sizeId:", filters.sizeId);
 
   // Simple filtering logic for mock data
   let filteredProducts = mockProducts;
@@ -590,8 +591,10 @@ async function getMockProducts(
         genderSlugs.push("women");
       } else if (id.includes("kids") || id.toLowerCase().includes("kids")) {
         genderSlugs.push("kids");
+      } else if (id.includes("unisex") || id.toLowerCase().includes("unisex")) {
+        genderSlugs.push("unisex");
       } else {
-        // If it's already a slug (like 'men', 'women', 'kids'), use it directly
+        // If it's already a slug (like 'men', 'women', 'kids', 'unisex'), use it directly
         genderSlugs.push(id);
       }
     }
@@ -637,6 +640,30 @@ async function getMockProducts(
   if (filters.brandId && filters.brandId.length > 0) {
     filteredProducts = filteredProducts.filter((product) =>
       filters.brandId!.includes(product.brand)
+    );
+  }
+
+  // Size filter
+  if (filters.sizeId && filters.sizeId.length > 0) {
+    console.log("Mock data size filter - sizeId:", filters.sizeId);
+    filteredProducts = filteredProducts.filter((product) => {
+      const productSizes = product.variants.map((v) => v.size);
+      const hasMatchingSize = filters.sizeId!.some((size) =>
+        productSizes.includes(size)
+      );
+      console.log(
+        `Product ${product.name} sizes:`,
+        productSizes,
+        "Filter sizes:",
+        filters.sizeId,
+        "Match:",
+        hasMatchingSize
+      );
+      return hasMatchingSize;
+    });
+    console.log(
+      "Mock data size filter - filtered products count:",
+      filteredProducts.length
     );
   }
 

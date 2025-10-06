@@ -38,11 +38,14 @@ export default function Filters({ initialFilters }: FiltersProps) {
     const params = new URLSearchParams();
 
     Object.entries(newFilters).forEach(([key, value]) => {
-      if (key === "sort" || key === "page") return;
+      if (key === "sort" || key === "page" || key === "limit") return;
       if (Array.isArray(value) && value.length > 0) {
         value.forEach((v) => params.append(key, v));
       }
     });
+
+    console.log("Filters updateURL - newFilters:", newFilters);
+    console.log("Filters updateURL - params:", params.toString());
 
     const queryString = params.toString();
     const newURL = queryString ? `/products?${queryString}` : "/products";
