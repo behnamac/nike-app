@@ -60,12 +60,12 @@ export default function Navbar() {
               >
                 Kids
               </Link>
-              <a
-                href="#"
+              <Link
+                href="/collections"
                 className="text-gray-900 hover:text-gray-700 px-3 py-2 text-sm font-medium transition-colors"
               >
                 Collections
-              </a>
+              </Link>
               <Link
                 href="/contact"
                 className="text-gray-900 hover:text-gray-700 px-3 py-2 text-sm font-medium transition-colors"
@@ -177,12 +177,12 @@ export default function Navbar() {
           >
             Kids
           </Link>
-          <a
-            href="#"
+          <Link
+            href="/collections"
             className="text-gray-900 hover:text-gray-700 block px-3 py-2 text-base font-medium"
           >
             Collections
-          </a>
+          </Link>
           <Link
             href="/contact"
             className="text-gray-900 hover:text-gray-700 block px-3 py-2 text-base font-medium"
