@@ -35,14 +35,9 @@ async function getOrCreateMockCart(): Promise<{
   let cartId = cookieStore.get("mock_cart_id")?.value;
 
   if (!cartId) {
+    // Create a new cart ID
     cartId = uuidv4();
-    cookieStore.set("mock_cart_id", cartId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-    });
+    // Note: We can't set cookies in server components, but we can still use the cart
   }
 
   if (!mockCarts.has(cartId)) {

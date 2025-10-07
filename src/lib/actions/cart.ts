@@ -101,14 +101,11 @@ async function getOrCreateCart(): Promise<ActionResult<{ cartId: string }>> {
       let guestSessionToken = cookieStore.get("guest_session")?.value;
 
       if (!guestSessionToken) {
-        guestSessionToken = uuidv4();
-        cookieStore.set("guest_session", guestSessionToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          path: "/",
-          maxAge: 60 * 60 * 24 * 30, // 30 days
-        });
+        // For server components, we can't create guest IDs, so return empty cart
+        return {
+          success: true,
+          data: { cartId: "empty" },
+        };
       }
 
       const [existingCart] = await db
@@ -155,6 +152,14 @@ export async function getCart(): Promise<ActionResult<CartItemWithDetails[]>> {
       return {
         success: false,
         error: cartResult.error || "Failed to get cart",
+      };
+    }
+
+    // Handle empty cart case
+    if (cartResult.data.cartId === "empty") {
+      return {
+        success: true,
+        data: [],
       };
     }
 

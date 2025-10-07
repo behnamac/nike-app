@@ -416,9 +416,8 @@ export async function getProductReviews(productId: string): Promise<Review[]> {
         r.rating,
         r.comment,
         r.created_at,
-        u.name as author_name
+        'Anonymous' as author_name
       FROM reviews r
-      LEFT JOIN users u ON r.user_id = u.id
       WHERE r.product_id = ${productId}
       ORDER BY r.created_at DESC
       LIMIT 10

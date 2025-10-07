@@ -17,6 +17,9 @@ interface ProductPageProps {
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
 
+  console.log("Product ID from params:", id, typeof id);
+  console.log("Full params object:", params);
+
   // Fetch product from database
   const product = await getProduct(id);
 
@@ -49,6 +52,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
     product.variants && product.variants.length > 0
       ? (product.variants[0] as Record<string, unknown>)
       : null;
+
+  // Calculate min and max prices from variants
+  const prices =
+    product.variants?.map(
+      (v: Record<string, unknown>) => Number(v.price) || 0
+    ) || [];
+  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+
+  console.log("Product variants:", product.variants);
+  console.log("Prices array:", prices);
+  console.log("Min price:", minPrice);
+  console.log("Max price:", maxPrice);
+  console.log("Default variant:", defaultVariant);
 
   // Get primary image
   const primaryImage =
@@ -121,33 +138,40 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <div className="flex items-center space-x-3">
                 <span className="text-3xl font-bold text-gray-900">
                   $
-                  {String(
-                    (defaultVariant as Record<string, unknown>)?.salePrice ||
-                      (defaultVariant as Record<string, unknown>)?.price ||
-                      ((product as Record<string, unknown>)
-                        .minPrice as number) ||
-                      0
-                  )}
+                  {defaultVariant
+                    ? Number(
+                        (defaultVariant as Record<string, unknown>)?.sale_price
+                      ) ||
+                      Number(
+                        (defaultVariant as Record<string, unknown>)?.price
+                      ) ||
+                      minPrice
+                    : minPrice}
                 </span>
                 {Boolean(
-                  (defaultVariant as Record<string, unknown>)?.salePrice
+                  (defaultVariant as Record<string, unknown>)?.sale_price
                 ) &&
                   Boolean(
                     (defaultVariant as Record<string, unknown>)?.price
                   ) && (
                     <span className="text-xl text-gray-500 line-through">
                       $
-                      {String(
+                      {Number(
                         (defaultVariant as Record<string, unknown>).price
                       )}
                     </span>
                   )}
               </div>
               {Boolean(
-                (defaultVariant as Record<string, unknown>)?.salePrice
+                (defaultVariant as Record<string, unknown>)?.sale_price
               ) && (
                 <p className="text-sm text-green-600 font-medium">
-                  Extra 20% off w/ code SPORT
+                  You save $
+                  {Number((defaultVariant as Record<string, unknown>).price) -
+                    Number(
+                      (defaultVariant as Record<string, unknown>).sale_price
+                    )}{" "}
+                  !
                 </p>
               )}
             </div>
@@ -174,9 +198,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
                       color: (v.color as Record<string, unknown>)
                         .name as string,
                       size: (v.size as Record<string, unknown>).name as string,
-                      price: v.price as number,
-                      salePrice: v.salePrice as number | undefined,
-                      inStock: v.inStock as number,
+                      price: Number(v.price),
+                      salePrice: v.sale_price
+                        ? Number(v.sale_price)
+                        : undefined,
+                      inStock: v.in_stock as number,
                     })
                   )}
                   defaultVariant={
@@ -192,12 +218,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
                             (defaultVariant as Record<string, unknown>)
                               .size as Record<string, unknown>
                           ).name as string,
-                          price: (defaultVariant as Record<string, unknown>)
-                            .price as number,
+                          price: Number(
+                            (defaultVariant as Record<string, unknown>).price
+                          ),
                           salePrice: (defaultVariant as Record<string, unknown>)
-                            .salePrice as number | undefined,
+                            .sale_price
+                            ? Number(
+                                (defaultVariant as Record<string, unknown>)
+                                  .sale_price
+                              )
+                            : undefined,
                           inStock: (defaultVariant as Record<string, unknown>)
-                            .inStock as number,
+                            .in_stock as number,
                         }
                       : undefined
                   }
@@ -253,16 +285,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
                     ).name as string
                   }
                   price={
-                    (defaultVariant as Record<string, unknown>).price as number
+                    Number((defaultVariant as Record<string, unknown>).price) ||
+                    minPrice
                   }
                   salePrice={
-                    (defaultVariant as Record<string, unknown>).salePrice as
-                      | number
-                      | undefined
+                    (defaultVariant as Record<string, unknown>).sale_price
+                      ? Number(
+                          (defaultVariant as Record<string, unknown>).sale_price
+                        )
+                      : undefined
                   }
                   inStock={
                     (defaultVariant as Record<string, unknown>)
-                      .inStock as number
+                      .in_stock as number
                   }
                   className="w-full"
                 />

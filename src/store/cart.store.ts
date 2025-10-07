@@ -106,7 +106,8 @@ export const useCartStore = create<CartState>()(
               isLoading: false,
             });
           }
-        } catch {
+        } catch (error) {
+          console.error("Cart store error:", error);
           set({
             error: "Failed to add item to cart",
             isLoading: false,
