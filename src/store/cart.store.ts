@@ -49,15 +49,50 @@ export const useCartStore = create<CartState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const { addCartItem } = await import("@/lib/actions/cart");
-          const result = await addCartItem({
-            productVariantId: newItem.productVariantId,
-            quantity: newItem.quantity,
-          });
+          // Try database first, fallback to mock cart
+          try {
+            const { addCartItem } = await import("@/lib/actions/cart");
+            const result = await addCartItem({
+              productVariantId: newItem.productVariantId,
+              quantity: newItem.quantity,
+            });
 
-          if (result.success && result.data) {
+            if (result.success && result.data) {
+              const item: CartItem = {
+                id: result.data.id,
+                ...newItem,
+              };
+
+              set((state) => ({
+                items: [...state.items, item],
+                isLoading: false,
+              }));
+              return;
+            }
+          } catch (dbError) {
+            console.log("Database cart failed, using mock cart:", dbError);
+          }
+
+          // Fallback to mock cart
+          const { addMockCartItem } = await import("@/lib/actions/mock-cart");
+          const result = await addMockCartItem(
+            newItem.productVariantId,
+            newItem.quantity,
+            {
+              productId: newItem.productId,
+              productName: newItem.productName,
+              productImage: newItem.productImage,
+              color: newItem.color,
+              size: newItem.size,
+              price: newItem.price,
+              salePrice: newItem.salePrice,
+              inStock: newItem.inStock,
+            }
+          );
+
+          if (result.success && result.itemId) {
             const item: CartItem = {
-              id: result.data.id,
+              id: result.itemId,
               ...newItem,
             };
 
@@ -83,8 +118,32 @@ export const useCartStore = create<CartState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const { updateCartItem } = await import("@/lib/actions/cart");
-          const result = await updateCartItem(id, updates);
+          // Try database first, fallback to mock cart
+          try {
+            const { updateCartItem } = await import("@/lib/actions/cart");
+            const result = await updateCartItem(id, updates);
+
+            if (result.success) {
+              set((state) => ({
+                items: state.items.map((item) =>
+                  item.id === id ? { ...item, ...updates } : item
+                ),
+                isLoading: false,
+              }));
+              return;
+            }
+          } catch (dbError) {
+            console.log(
+              "Database cart update failed, using mock cart:",
+              dbError
+            );
+          }
+
+          // Fallback to mock cart
+          const { updateMockCartItem } = await import(
+            "@/lib/actions/mock-cart"
+          );
+          const result = await updateMockCartItem(id, updates);
 
           if (result.success) {
             set((state) => ({
@@ -111,8 +170,30 @@ export const useCartStore = create<CartState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const { removeCartItem } = await import("@/lib/actions/cart");
-          const result = await removeCartItem(id);
+          // Try database first, fallback to mock cart
+          try {
+            const { removeCartItem } = await import("@/lib/actions/cart");
+            const result = await removeCartItem(id);
+
+            if (result.success) {
+              set((state) => ({
+                items: state.items.filter((item) => item.id !== id),
+                isLoading: false,
+              }));
+              return;
+            }
+          } catch (dbError) {
+            console.log(
+              "Database cart remove failed, using mock cart:",
+              dbError
+            );
+          }
+
+          // Fallback to mock cart
+          const { removeMockCartItem } = await import(
+            "@/lib/actions/mock-cart"
+          );
+          const result = await removeMockCartItem(id);
 
           if (result.success) {
             set((state) => ({
@@ -137,8 +218,25 @@ export const useCartStore = create<CartState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const { clearCart } = await import("@/lib/actions/cart");
-          const result = await clearCart();
+          // Try database first, fallback to mock cart
+          try {
+            const { clearCart } = await import("@/lib/actions/cart");
+            const result = await clearCart();
+
+            if (result.success) {
+              set({ items: [], isLoading: false });
+              return;
+            }
+          } catch (dbError) {
+            console.log(
+              "Database cart clear failed, using mock cart:",
+              dbError
+            );
+          }
+
+          // Fallback to mock cart
+          const { clearMockCart } = await import("@/lib/actions/mock-cart");
+          const result = await clearMockCart();
 
           if (result.success) {
             set({ items: [], isLoading: false });

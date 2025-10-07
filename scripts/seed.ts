@@ -4,6 +4,10 @@ import * as schema from "../src/lib/db/schema";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import path from "path";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config({ path: ".env.local" });
 
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql, { schema });

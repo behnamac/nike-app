@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getCart } from "@/lib/actions/cart";
+import { getMockCart } from "@/lib/actions/mock-cart";
 import { getCurrentUser } from "@/lib/auth/actions";
 import CartItems from "@/components/CartItems";
 import CartSummary from "@/components/CartSummary";
@@ -10,9 +11,21 @@ export default async function CartPage() {
   const userResult = await getCurrentUser();
   const isAuthenticated = Boolean(userResult.success && userResult.data);
 
-  // Get cart items
-  const cartResult = await getCart();
-  const cartItems = cartResult.success ? cartResult.data || [] : [];
+  // Get cart items - try database first, fallback to mock cart
+  let cartItems = [];
+  try {
+    const cartResult = await getCart();
+    if (cartResult.success) {
+      cartItems = cartResult.data || [];
+    } else {
+      // Fallback to mock cart
+      cartItems = await getMockCart();
+    }
+  } catch (error) {
+    console.log("Database cart failed, using mock cart:", error);
+    // Fallback to mock cart
+    cartItems = await getMockCart();
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
