@@ -72,8 +72,7 @@ export async function getAllProducts(
     // Test database connection
     const db = getDb();
     await db.execute(sql`SELECT 1`);
-  } catch (error) {
-    console.warn("Database not available, using mock data:", error);
+  } catch (_error) {
     return await getMockProducts(filters);
   }
   try {
@@ -83,9 +82,6 @@ export async function getAllProducts(
       genderId,
       brandId,
       colorId,
-      sizeId,
-      priceMin,
-      priceMax,
       sortBy = "created_at_desc",
       page = 1,
       limit = 24,
@@ -297,8 +293,7 @@ export async function getAllProducts(
       totalCount,
       hasMore: offset + limit < totalCount,
     };
-  } catch (error) {
-    console.warn("Database query failed, using mock data:", error);
+  } catch (_error) {
     return await getMockProducts(filters);
   }
 }
@@ -311,8 +306,7 @@ export async function getProduct(productId: string) {
     // Test database connection
     const db = getDb();
     await db.execute(sql`SELECT 1`);
-  } catch (error) {
-    console.warn("Database not available, using mock data:", error);
+  } catch (_error) {
     return getMockProduct(productId);
   }
 
@@ -387,8 +381,7 @@ export async function getProduct(productId: string) {
       })),
       images: imagesQuery.rows,
     };
-  } catch (error) {
-    console.warn("Database query failed, using mock data:", error);
+  } catch (_error) {
     return getMockProduct(productId);
   }
 }
@@ -401,8 +394,7 @@ export async function getProductReviews(productId: string): Promise<Review[]> {
     // Test database connection
     const db = getDb();
     await db.execute(sql`SELECT 1`);
-  } catch (error) {
-    console.warn("Database not available, returning empty reviews:", error);
+  } catch (_error) {
     return [];
   }
 
@@ -431,8 +423,7 @@ export async function getProductReviews(productId: string): Promise<Review[]> {
       content: (review.comment as string) || "",
       createdAt: review.created_at as Date,
     }));
-  } catch (error) {
-    console.warn("Failed to fetch reviews:", error);
+  } catch (_error) {
     return [];
   }
 }
@@ -447,11 +438,7 @@ export async function getRecommendedProducts(
     // Test database connection
     const db = getDb();
     await db.execute(sql`SELECT 1`);
-  } catch (error) {
-    console.warn(
-      "Database not available, returning empty recommendations:",
-      error
-    );
+  } catch (_error) {
     return [];
   }
 
@@ -537,8 +524,7 @@ export async function getRecommendedProducts(
       variants: [], // Not needed for recommendations
       images: [], // Not needed for recommendations
     }));
-  } catch (error) {
-    console.warn("Failed to fetch recommended products:", error);
+  } catch (_error) {
     return [];
   }
 }

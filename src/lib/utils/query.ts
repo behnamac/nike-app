@@ -249,7 +249,6 @@ async function getGenderMapping(): Promise<Record<string, string>> {
   try {
     // Check if DATABASE_URL is available
     if (!process.env.DATABASE_URL) {
-      console.warn("DATABASE_URL not found, using fallback gender mapping");
       return getFallbackGenderMapping();
     }
 
@@ -261,8 +260,7 @@ async function getGenderMapping(): Promise<Record<string, string>> {
       mapping[gender.slug] = gender.id;
     });
     return mapping;
-  } catch (error) {
-    console.warn("Could not fetch gender mapping from database:", error);
+  } catch (_error) {
     return getFallbackGenderMapping();
   }
 }
@@ -272,7 +270,6 @@ async function getGenderMapping(): Promise<Record<string, string>> {
  * Returns empty mapping to disable gender filtering when DB is unavailable
  */
 function getFallbackGenderMapping(): Record<string, string> {
-  console.warn("Database not available, gender filtering will be disabled");
   return {};
 }
 
@@ -284,11 +281,9 @@ async function convertGenderSlugsToIds(
   genderSlugs: string[]
 ): Promise<string[]> {
   const mapping = await getGenderMapping();
-  console.log("Gender mapping:", mapping);
   const result = genderSlugs
     .map((slug) => mapping[slug])
     .filter((id): id is string => id !== undefined);
-  console.log("Converted slugs to IDs:", result);
   return result;
 }
 
@@ -317,7 +312,6 @@ export async function parseProductFilters(
       ? await convertGenderSlugsToIds(genderSlugs)
       : undefined;
   } catch {
-    console.warn("Gender filtering not available, showing all products");
     genderIds = undefined;
   }
 
@@ -398,8 +392,7 @@ export async function convertToFilterParams(
           .map((id) => reverseMapping[id])
           .filter((slug): slug is string => slug !== undefined);
       }
-    } catch (error) {
-      console.warn("Could not convert gender IDs to slugs:", error);
+    } catch (_error) {
       // Fallback to original gender slugs
       genderSlugs = filters.originalGenderSlugs;
     }

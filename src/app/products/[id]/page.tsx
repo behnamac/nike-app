@@ -17,9 +17,6 @@ interface ProductPageProps {
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
 
-  console.log("Product ID from params:", id, typeof id);
-  console.log("Full params object:", params);
-
   // Fetch product from database
   const product = await getProduct(id);
 
@@ -59,13 +56,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
       (v: Record<string, unknown>) => Number(v.price) || 0
     ) || [];
   const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
-
-  console.log("Product variants:", product.variants);
-  console.log("Prices array:", prices);
-  console.log("Min price:", minPrice);
-  console.log("Max price:", maxPrice);
-  console.log("Default variant:", defaultVariant);
 
   // Get primary image
   const primaryImage =

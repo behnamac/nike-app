@@ -13,7 +13,6 @@ import {
 import { getCurrentUser } from "@/lib/auth/actions";
 import { eq, and, desc } from "drizzle-orm";
 import { cookies } from "next/headers";
-import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
 // Types
@@ -98,7 +97,7 @@ async function getOrCreateCart(): Promise<ActionResult<{ cartId: string }>> {
       }
     } else {
       // Guest user - find or create guest cart
-      let guestSessionToken = cookieStore.get("guest_session")?.value;
+      const guestSessionToken = cookieStore.get("guest_session")?.value;
 
       if (!guestSessionToken) {
         // For server components, we can't create guest IDs, so return empty cart
@@ -134,8 +133,7 @@ async function getOrCreateCart(): Promise<ActionResult<{ cartId: string }>> {
       success: true,
       data: { cartId },
     };
-  } catch (error) {
-    console.error("Get or create cart error:", error);
+  } catch (_error) {
     return {
       success: false,
       error: "Failed to get or create cart",
@@ -211,8 +209,7 @@ export async function getCart(): Promise<ActionResult<CartItemWithDetails[]>> {
         inStock: item.inStock,
       })),
     };
-  } catch (error) {
-    console.error("Get cart error:", error);
+  } catch (_error) {
     return {
       success: false,
       error: "Failed to get cart items",
@@ -275,8 +272,7 @@ export async function addCartItem(
         data: { id: newItem.id },
       };
     }
-  } catch (error) {
-    console.error("Add cart item error:", error);
+  } catch (_error) {
     return {
       success: false,
       error: "Failed to add item to cart",
@@ -307,8 +303,7 @@ export async function updateCartItem(
       success: true,
       data: null,
     };
-  } catch (error) {
-    console.error("Update cart item error:", error);
+  } catch (_error) {
     return {
       success: false,
       error: "Failed to update cart item",
@@ -326,8 +321,7 @@ export async function removeCartItem(
       success: true,
       data: null,
     };
-  } catch (error) {
-    console.error("Remove cart item error:", error);
+  } catch (_error) {
     return {
       success: false,
       error: "Failed to remove cart item",
@@ -354,8 +348,7 @@ export async function clearCart(): Promise<ActionResult<null>> {
       success: true,
       data: null,
     };
-  } catch (error) {
-    console.error("Clear cart error:", error);
+  } catch (_error) {
     return {
       success: false,
       error: "Failed to clear cart",
@@ -450,8 +443,7 @@ export async function mergeGuestCartWithUserCart(
       success: true,
       data: null,
     };
-  } catch (error) {
-    console.error("Merge guest cart error:", error);
+  } catch (_error) {
     return {
       success: false,
       error: "Failed to merge guest cart",

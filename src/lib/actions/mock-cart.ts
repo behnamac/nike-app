@@ -58,8 +58,7 @@ export async function getMockCart(): Promise<MockCartItem[]> {
   try {
     const { cart } = await getOrCreateMockCart();
     return cart.items;
-  } catch (error) {
-    console.error("Get mock cart error:", error);
+  } catch (_error) {
     return [];
   }
 }
@@ -104,8 +103,7 @@ export async function addMockCartItem(
       success: true,
       itemId: existingItem?.id || cart.items[cart.items.length - 1]?.id,
     };
-  } catch (error) {
-    console.error("Add mock cart item error:", error);
+  } catch (_error) {
     return {
       success: false,
       error: "Failed to add item to cart",
@@ -133,8 +131,7 @@ export async function updateMockCartItem(
     }
 
     return { success: true };
-  } catch (error) {
-    console.error("Update mock cart item error:", error);
+  } catch (_error) {
     return {
       success: false,
       error: "Failed to update cart item",
@@ -158,8 +155,7 @@ export async function removeMockCartItem(
 
     cart.items.splice(itemIndex, 1);
     return { success: true };
-  } catch (error) {
-    console.error("Remove mock cart item error:", error);
+  } catch (_error) {
     return {
       success: false,
       error: "Failed to remove cart item",
@@ -175,8 +171,7 @@ export async function clearMockCart(): Promise<{
     const { cart } = await getOrCreateMockCart();
     cart.items = [];
     return { success: true };
-  } catch (error) {
-    console.error("Clear mock cart error:", error);
+  } catch (_error) {
     return {
       success: false,
       error: "Failed to clear cart",

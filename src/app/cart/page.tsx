@@ -21,8 +21,7 @@ export default async function CartPage() {
       // Fallback to mock cart
       cartItems = await getMockCart();
     }
-  } catch (error) {
-    console.log("Database cart failed, using mock cart:", error);
+  } catch {
     // Fallback to mock cart
     cartItems = await getMockCart();
   }

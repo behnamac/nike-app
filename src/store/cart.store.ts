@@ -69,9 +69,7 @@ export const useCartStore = create<CartState>()(
               }));
               return;
             }
-          } catch (dbError) {
-            console.log("Database cart failed, using mock cart:", dbError);
-          }
+          } catch (_dbError) {}
 
           // Fallback to mock cart
           const { addMockCartItem } = await import("@/lib/actions/mock-cart");
@@ -106,8 +104,7 @@ export const useCartStore = create<CartState>()(
               isLoading: false,
             });
           }
-        } catch (error) {
-          console.error("Cart store error:", error);
+        } catch (_error) {
           set({
             error: "Failed to add item to cart",
             isLoading: false,
@@ -133,12 +130,7 @@ export const useCartStore = create<CartState>()(
               }));
               return;
             }
-          } catch (dbError) {
-            console.log(
-              "Database cart update failed, using mock cart:",
-              dbError
-            );
-          }
+          } catch (_dbError) {}
 
           // Fallback to mock cart
           const { updateMockCartItem } = await import(
@@ -183,12 +175,7 @@ export const useCartStore = create<CartState>()(
               }));
               return;
             }
-          } catch (dbError) {
-            console.log(
-              "Database cart remove failed, using mock cart:",
-              dbError
-            );
-          }
+          } catch (_dbError) {}
 
           // Fallback to mock cart
           const { removeMockCartItem } = await import(
@@ -228,12 +215,7 @@ export const useCartStore = create<CartState>()(
               set({ items: [], isLoading: false });
               return;
             }
-          } catch (dbError) {
-            console.log(
-              "Database cart clear failed, using mock cart:",
-              dbError
-            );
-          }
+          } catch (_dbError) {}
 
           // Fallback to mock cart
           const { clearMockCart } = await import("@/lib/actions/mock-cart");
