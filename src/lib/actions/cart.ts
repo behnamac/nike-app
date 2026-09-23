@@ -10,10 +10,11 @@ import {
   sizes,
   productImages,
 } from "@/lib/db/schema";
-import { getCurrentUser } from "@/lib/auth/actions";
+import { getCurrentUser, createGuestSession } from "@/lib/auth/actions";
 import { eq, and, desc } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { v4 as uuidv4 } from "uuid";
 
 // Types
 type ActionResult<T> = {
@@ -66,7 +67,11 @@ const updateCartItemSchema = z.object({
 });
 
 // Helper function to get or create cart
-async function getOrCreateCart(): Promise<ActionResult<{ cartId: string }>> {
+// `createGuest` must only be true when called from a Server Action,
+// since cookies can't be set while rendering Server Components.
+async function getOrCreateCart(
+  createGuest = false
+): Promise<ActionResult<{ cartId: string }>> {
   try {
     const userResult = await getCurrentUser();
     const cookieStore = await cookies();
@@ -97,7 +102,24 @@ async function getOrCreateCart(): Promise<ActionResult<{ cartId: string }>> {
       }
     } else {
       // Guest user - find or create guest cart
-      const guestSessionToken = cookieStore.get("guest_session")?.value;
+      let guestSessionToken = cookieStore.get("guest_session")?.value;
+
+      if (!guestSessionToken && createGuest) {
+        const guestResult = await createGuestSession();
+        if (guestResult.success && guestResult.data) {
+          guestSessionToken = guestResult.data.sessionToken;
+        } else {
+          // Guest table unavailable - still give the visitor a stable cart
+          guestSessionToken = uuidv4();
+          cookieStore.set("guest_session", guestSessionToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/",
+            maxAge: 7 * 24 * 60 * 60,
+          });
+        }
+      }
 
       if (!guestSessionToken) {
         // For server components, we can't create guest IDs, so return empty cart
@@ -223,7 +245,7 @@ export async function addCartItem(
   try {
     const validatedData = addCartItemSchema.parse(data);
 
-    const cartResult = await getOrCreateCart();
+    const cartResult = await getOrCreateCart(true);
 
     if (!cartResult.success || !cartResult.data) {
       return {
@@ -337,6 +359,13 @@ export async function clearCart(): Promise<ActionResult<null>> {
       return {
         success: false,
         error: cartResult.error || "Failed to get cart",
+      };
+    }
+
+    if (cartResult.data.cartId === "empty") {
+      return {
+        success: true,
+        data: null,
       };
     }
 
