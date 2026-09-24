@@ -24,6 +24,8 @@ export interface ProductFilters {
   brandId?: string[];
   colorId?: string[];
   sizeId?: string[];
+  // Price range values from FILTER_OPTIONS.price, e.g. "50-100" or "200+"
+  priceRanges?: string[];
   priceMin?: number;
   priceMax?: number;
   sortBy?: string;
@@ -338,6 +340,11 @@ export async function parseProductFilters(
           (typeof params.size === "string" || typeof params.size === "number")
         ? [String(params.size)]
         : undefined,
+    priceRanges: Array.isArray(params.price)
+      ? params.price.filter((v): v is string => typeof v === "string")
+      : params.price && typeof params.price === "string"
+        ? [params.price]
+        : undefined,
     priceMin: typeof params.priceMin === "number" ? params.priceMin : undefined,
     priceMax: typeof params.priceMax === "number" ? params.priceMax : undefined,
     sortBy: typeof params.sort === "string" ? params.sort : "created_at_desc",
@@ -357,6 +364,7 @@ export function convertToProductFilters(filters: FilterParams): ProductFilters {
     brandId: filters.brand,
     colorId: filters.color,
     sizeId: filters.size,
+    priceRanges: filters.price,
     priceMin: filters.priceMin,
     priceMax: filters.priceMax,
     sortBy: filters.sort || "created_at_desc",
@@ -390,13 +398,26 @@ export async function convertToFilterParams(
     gender: genderSlugs,
     size: filters.sizeId,
     color: filters.colorId,
-    price:
-      filters.priceMin && filters.priceMax
-        ? [`${filters.priceMin}-${filters.priceMax}`]
-        : undefined,
+    price: filters.priceRanges,
     category: filters.categoryId,
     brand: filters.brandId,
     sort: filters.sortBy,
     page: filters.page,
   };
+}
+
+/**
+ * Parse a price range value like "50-100" or "200+" into bounds.
+ * The upper bound is exclusive so adjacent ranges don't overlap.
+ */
+export function parsePriceRange(
+  range: string
+): { min: number; max?: number } | null {
+  const openEnded = range.match(/^(\d+(?:\.\d+)?)\+$/);
+  if (openEnded) return { min: Number(openEnded[1]) };
+
+  const bounded = range.match(/^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/);
+  if (bounded) return { min: Number(bounded[1]), max: Number(bounded[2]) };
+
+  return null;
 }

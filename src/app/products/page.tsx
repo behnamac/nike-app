@@ -119,6 +119,15 @@ export default async function ProductsPage({
                       Size: {sizeId}
                     </span>
                   ))}
+                  {filters.priceRanges?.map((range) => (
+                    <span
+                      key={range}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800"
+                    >
+                      Price: $
+                      {range.endsWith("+") ? range : range.replace("-", " - $")}
+                    </span>
+                  ))}
                   {filters.priceMin && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800">
                       Min: ${filters.priceMin}

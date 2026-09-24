@@ -2,8 +2,8 @@
 
 import { getDb } from "@/lib/db";
 import { products, productVariants } from "@/lib/db/schema";
-import { eq, like, inArray, desc, asc, sql, and } from "drizzle-orm";
-import { ProductFilters } from "@/lib/utils/query";
+import { eq, like, inArray, desc, asc, sql, and, or, type SQL } from "drizzle-orm";
+import { ProductFilters, parsePriceRange } from "@/lib/utils/query";
 
 // Type definitions
 export interface Review {
@@ -74,13 +74,35 @@ export async function getAllProducts(
       genderId,
       brandId,
       colorId,
+      priceRanges,
       sortBy = "created_at_desc",
       page = 1,
       limit = 24,
     } = filters;
 
-    // Note: Variant conditions (price, color, size) are not implemented in this version
+    // Note: Variant conditions (color, size) are not implemented in this version
     // They would require additional joins and filtering logic
+
+    // A product matches a price range if any of its variants is priced in it
+    let priceCondition: SQL | undefined;
+    if (priceRanges && priceRanges.length > 0) {
+      const rangeConditions = priceRanges
+        .map(parsePriceRange)
+        .filter((range) => range !== null)
+        .map(({ min, max }) =>
+          max === undefined
+            ? sql`pv.price >= ${min}`
+            : sql`pv.price >= ${min} AND pv.price < ${max}`
+        );
+      priceCondition =
+        rangeConditions.length > 0
+          ? sql`EXISTS (
+              SELECT 1 FROM product_variants pv
+              WHERE pv.product_id = ${products.id}
+              AND (${or(...rangeConditions)})
+            )`
+          : sql`false`;
+    }
 
     // Build sort order
     let orderBy;
@@ -128,6 +150,9 @@ export async function getAllProducts(
     if (brandId && brandId.length > 0) {
       whereConditions.push(inArray(products.brandId, brandId));
     }
+    if (priceCondition) {
+      whereConditions.push(priceCondition);
+    }
 
     const totalCountResult = await db
       .select({ count: sql<number>`count(distinct ${products.id})` })
@@ -156,6 +181,9 @@ export async function getAllProducts(
     }
     if (brandId && brandId.length > 0) {
       productsWhereConditions.push(inArray(products.brandId, brandId));
+    }
+    if (priceCondition) {
+      productsWhereConditions.push(priceCondition);
     }
 
     const productsResult = await db
