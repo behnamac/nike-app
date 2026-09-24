@@ -1,95 +1,32 @@
-import { Suspense } from "react";
-import { getCart } from "@/lib/actions/cart";
+import { getCart, CartItemWithDetails } from "@/lib/actions/cart";
 import { getMockCart } from "@/lib/actions/mock-cart";
 import { getCurrentUser } from "@/lib/auth/actions";
-import CartItems from "@/components/CartItems";
-import CartSummary from "@/components/CartSummary";
-import EmptyCart from "@/components/EmptyCart";
+import CartContent from "@/components/CartContent";
 
 export default async function CartPage() {
   // Get current user to determine if checkout should redirect to auth
   const userResult = await getCurrentUser();
   const isAuthenticated = Boolean(userResult.success && userResult.data);
 
-  // Get cart items - try database first, fallback to mock cart
-  let cartItems = [];
+  // Get cart items - try database first, fallback to mock cart.
+  // An empty DB result also falls back: items added while the DB was
+  // unavailable (or with non-UUID mock variant ids) only live in the mock cart.
+  let cartItems: CartItemWithDetails[] = [];
   try {
     const cartResult = await getCart();
     if (cartResult.success) {
       cartItems = cartResult.data || [];
-    } else {
-      // Fallback to mock cart
-      cartItems = await getMockCart();
     }
-  } catch {
-    // Fallback to mock cart
+  } catch {}
+
+  if (cartItems.length === 0) {
     cartItems = await getMockCart();
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
-          <p className="text-gray-600 mt-2">
-            {cartItems.length} item{cartItems.length !== 1 ? "s" : ""} in your
-            cart
-          </p>
-        </div>
-
-        {cartItems.length === 0 ? (
-          <EmptyCart />
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
-            <div className="lg:col-span-2">
-              <Suspense
-                fallback={
-                  <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse"
-                      >
-                        <div className="flex space-x-4">
-                          <div className="w-24 h-24 bg-gray-200 rounded-lg" />
-                          <div className="flex-1 space-y-2">
-                            <div className="h-4 bg-gray-200 rounded w-3/4" />
-                            <div className="h-3 bg-gray-200 rounded w-1/2" />
-                            <div className="h-3 bg-gray-200 rounded w-1/4" />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                }
-              >
-                <CartItems initialItems={cartItems} />
-              </Suspense>
-            </div>
-
-            {/* Cart Summary */}
-            <div className="lg:col-span-1">
-              <Suspense
-                fallback={
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
-                    <div className="space-y-4">
-                      <div className="h-6 bg-gray-200 rounded w-1/2" />
-                      <div className="h-4 bg-gray-200 rounded w-3/4" />
-                      <div className="h-4 bg-gray-200 rounded w-1/2" />
-                      <div className="h-12 bg-gray-200 rounded" />
-                    </div>
-                  </div>
-                }
-              >
-                <CartSummary
-                  items={cartItems}
-                  isAuthenticated={isAuthenticated}
-                />
-              </Suspense>
-            </div>
-          </div>
-        )}
+        <CartContent initialItems={cartItems} isAuthenticated={isAuthenticated} />
       </div>
     </div>
   );
