@@ -1,98 +1,94 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import ShoeModel from "./ShoeModel";
+import { RotateCw } from "lucide-react";
+import ShoeModel, { type ShoeMotion } from "./ShoeModel";
+import { useMotionAllowed } from "./motion";
 
 interface ShoeSceneProps {
   className?: string;
 }
 
 export default function ShoeScene({ className = "" }: ShoeSceneProps) {
-  // Get responsive transform based on desktop screen size
-  const getResponsiveTransform = () => {
-    if (typeof window === "undefined") {
-      // Default for SSR
-      return {
-        position: [0, 0, 0] as [number, number, number],
-        rotation: [0, 0, 0] as [number, number, number],
-        scale: [3, 3, 3] as [number, number, number],
-      };
-    }
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const lastX = useRef(0);
+  const motionAllowed = useMotionAllowed();
+  const motion = useRef<ShoeMotion>({
+    mx: 0,
+    my: 0,
+    dragYaw: 0,
+    dragging: false,
+    releasedAt: 0,
+    animate: false,
+  });
+  const [visible, setVisible] = useState(true);
+  const [showHint, setShowHint] = useState(true);
 
-    const width = window.innerWidth;
-
-    if (width === 1920) {
-      // 1920px Resolution - Optimized for your monitor
-      return {
-        position: [0, 0, 0] as [number, number, number],
-        rotation: [0, 0, 0] as [number, number, number],
-        scale: [2.5, 2.5, 2.5] as [number, number, number],
-      };
-    } else if (width >= 1024 && width < 1440) {
-      // Standard Desktop (1024px - 1439px)
-      return {
-        position: [0, 0, 0] as [number, number, number],
-        rotation: [0, 0, 0] as [number, number, number],
-        scale: [1.5, 1.5, 1.5] as [number, number, number],
-      };
-    } else if (width >= 1440 && width < 2560) {
-      // Large Desktop (1440px - 2559px)
-      return {
-        position: [0.5, 0, 0] as [number, number, number],
-        rotation: [0, 10, 0] as [number, number, number],
-        scale: [1.5, 1.5, 1.5] as [number, number, number],
-      };
-    } else if (width >= 2560) {
-      // 4K Desktop (2560px+)
-      return {
-        position: [1, 0, 0] as [number, number, number],
-        rotation: [0, 15, 0] as [number, number, number],
-        scale: [2, 2, 2] as [number, number, number],
-      };
-    } else {
-      // Fallback for smaller screens (though 3D model won't show on mobile/tablet)
-      return {
-        position: [0, 0, 0] as [number, number, number],
-        rotation: [0, 0, 0] as [number, number, number],
-        scale: [2.5, 2.5, 2.5] as [number, number, number],
-      };
-    }
-  };
-
-  const [transform, setTransform] = useState(getResponsiveTransform());
-
-  // Update transform on window resize
   useEffect(() => {
-    const handleResize = () => {
-      setTransform(getResponsiveTransform());
-    };
+    motion.current.animate = motionAllowed;
+  }, [motionAllowed]);
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      motion.current.mx = e.clientX / window.innerWidth - 0.5;
+      motion.current.my = e.clientY / window.innerHeight - 0.5;
+    };
+    window.addEventListener("mousemove", onMouseMove);
+
+    // Stop rendering once the hero is off screen
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting));
+    if (wrapperRef.current) observer.observe(wrapperRef.current);
+
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      observer.disconnect();
+    };
   }, []);
 
+  const endDrag = () => {
+    if (!motion.current.dragging) return;
+    motion.current.dragging = false;
+    motion.current.releasedAt = performance.now();
+  };
+
   return (
-    <div className={`w-full h-full relative ${className}`}>
+    <div
+      ref={wrapperRef}
+      className={`relative touch-pan-y cursor-grab active:cursor-grabbing ${className}`}
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        motion.current.dragging = true;
+        lastX.current = e.clientX;
+        setShowHint(false);
+      }}
+      onPointerMove={(e) => {
+        if (!motion.current.dragging) return;
+        motion.current.dragYaw += (e.clientX - lastX.current) * 0.012;
+        lastX.current = e.clientX;
+      }}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+    >
       <Canvas
-        camera={{
-          position: [0, 0, 8],
-          fov: 50,
-        }}
-        style={{
-          background: "transparent",
-          width: "100%",
-          height: "100%",
-        }}
+        frameloop={visible ? "always" : "never"}
+        camera={{ position: [0, 1.4, 8], fov: 30 }}
+        style={{ background: "transparent" }}
+        aria-label="Nike Dunk High Hawaii 3D model"
       >
         <Suspense fallback={null}>
-          <ShoeModel
-            scale={transform.scale}
-            position={transform.position}
-            rotation={transform.rotation}
-          />
+          <ShoeModel motion={motion} />
         </Suspense>
       </Canvas>
+
+      <div
+        className={`absolute left-1/2 bottom-[clamp(40px,10vw,120px)] -translate-x-1/2 flex items-center gap-2 px-3.5 py-2 rounded-full bg-white shadow-[0_6px_20px_rgba(17,17,17,.12)] text-[13px] font-medium whitespace-nowrap pointer-events-none transition-opacity duration-500 ${
+          showHint ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <RotateCw className="w-3.5 h-3.5" />
+        Drag to rotate
+      </div>
     </div>
   );
 }

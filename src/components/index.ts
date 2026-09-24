@@ -2,7 +2,7 @@ export { default as Navbar } from "./Navbar";
 export { default as Card } from "./Card";
 export { default as Footer } from "./Footer";
 export { default as HeroSection } from "./HeroSection";
-export { default as BestOfAirMax } from "./BestOfAirMax";
+export { default as FeaturedProducts } from "./FeaturedProducts";
 export { default as TrendingNow } from "./TrendingNow";
 export { default as ReactPrestoBanner } from "./ReactPrestoBanner";
 export { default as Filters } from "./Filters";

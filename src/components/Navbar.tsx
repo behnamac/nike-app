@@ -1,226 +1,164 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { FaUser, FaSignOutAlt } from "react-icons/fa";
+import { Search } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import CartIcon from "./CartIcon";
 
+const NAV_LINKS = [
+  { label: "Men", href: "/products?gender=men" },
+  { label: "Women", href: "/products?gender=women" },
+  { label: "Kids", href: "/products?gender=kids" },
+  { label: "Collections", href: "/collections" },
+  { label: "Contact", href: "/contact" },
+];
+
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { user, loading, signOut: authSignOut } = useAuth();
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  // Transparent over the hero, frosted once the page scrolls
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleSignOut = async () => {
     await authSignOut();
-    // The auth context will automatically update the UI
   };
 
+  const solid = scrolled || isMobileMenuOpen;
+
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <Link href="/" className="block">
-              <div className="w-8 h-8 relative">
-                <Image
-                  src="/logo.svg"
-                  alt="Nike Logo"
-                  width={32}
-                  height={32}
-                  className="w-full h-full filter brightness-0"
-                />
-              </div>
-            </Link>
-          </div>
+    <nav
+      className={`sticky top-0 z-50 h-16 border-b transition-[background-color,border-color,backdrop-filter] duration-400 ${
+        solid
+          ? "bg-white/[.82] border-light-300 backdrop-blur-lg backdrop-saturate-[1.8]"
+          : "bg-white/0 border-transparent"
+      }`}
+    >
+      <div className="max-w-[1280px] h-full mx-auto px-4 sm:px-8 flex items-center justify-between gap-6">
+        <Link href="/" aria-label="Nike home" className="flex w-10 h-8">
+          <Image
+            src="/logo.svg"
+            alt="Nike Logo"
+            width={40}
+            height={32}
+            className="w-full h-full brightness-0"
+          />
+        </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-8">
-              <Link
-                href="/products?gender=men"
-                className="text-gray-900 hover:text-gray-700 px-3 py-2 text-sm font-medium transition-colors"
-              >
-                Men
-              </Link>
-              <Link
-                href="/products?gender=women"
-                className="text-gray-900 hover:text-gray-700 px-3 py-2 text-sm font-medium transition-colors"
-              >
-                Women
-              </Link>
-              <Link
-                href="/products?gender=kids"
-                className="text-gray-900 hover:text-gray-700 px-3 py-2 text-sm font-medium transition-colors"
-              >
-                Kids
-              </Link>
-              <Link
-                href="/collections"
-                className="text-gray-900 hover:text-gray-700 px-3 py-2 text-sm font-medium transition-colors"
-              >
-                Collections
-              </Link>
-              <Link
-                href="/contact"
-                className="text-gray-900 hover:text-gray-700 px-3 py-2 text-sm font-medium transition-colors"
-              >
-                Contact
-              </Link>
-            </div>
-          </div>
-
-          {/* Desktop Right Section */}
-          <div className="hidden md:flex items-center space-x-6">
-            <a
-              href="#"
-              className="text-gray-900 hover:text-gray-700 text-sm font-medium transition-colors"
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-2">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className="px-3 py-1.5 text-caption text-dark-900 bg-[linear-gradient(currentColor,currentColor)] bg-no-repeat bg-[position:12px_100%] bg-[length:0_2px] hover:bg-[length:calc(100%-24px)_2px] transition-[background-size] duration-[350ms] ease-[var(--ease-out-soft)]"
             >
-              Search
-            </a>
-            <CartIcon />
+              {link.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Right Section */}
+        <div className="flex items-center gap-1">
+          <Link
+            href="/products"
+            aria-label="Search products"
+            className="w-11 h-11 rounded-full flex items-center justify-center text-dark-900 hover:bg-light-200 transition-colors"
+          >
+            <Search className="w-5 h-5" />
+          </Link>
+          <CartIcon />
+
+          <div className="hidden md:flex items-center ml-2">
             {loading ? (
-              <div className="flex items-center space-x-2 text-gray-500 text-sm font-medium">
-                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-                <span>Loading...</span>
-              </div>
+              <div className="w-4 h-4 mx-4 border-2 border-light-400 border-t-dark-700 rounded-full animate-spin" />
             ) : user ? (
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-700 text-sm font-medium">
-                  Welcome, {user.name || user.email}
-                </span>
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center space-x-2 text-gray-900 hover:text-gray-700 text-sm font-medium transition-colors"
-                >
-                  <FaSignOutAlt className="w-4 h-4" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
+              <button
+                onClick={handleSignOut}
+                title={`Signed in as ${user.name || user.email}`}
+                className="flex items-center gap-2 h-10 px-4 rounded-full border border-light-400 text-caption text-dark-900 hover:bg-dark-900 hover:text-white hover:border-dark-900 transition-colors cursor-pointer"
+              >
+                <FaSignOutAlt className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
             ) : (
               <Link
                 href="/sign-in"
-                className="flex items-center space-x-2 text-gray-900 hover:text-gray-700 text-sm font-medium transition-colors"
+                className="flex items-center gap-2 h-10 px-4 rounded-full border border-light-400 text-caption text-dark-900 hover:bg-dark-900 hover:text-white hover:border-dark-900 transition-colors"
               >
-                <FaUser className="w-4 h-4" />
+                <FaUser className="w-3.5 h-3.5" />
                 <span>Sign In</span>
               </Link>
             )}
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button
-              onClick={toggleMobileMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-900 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-gray-500"
-              aria-expanded="false"
+          <button
+            onClick={() => setIsMobileMenuOpen((open) => !open)}
+            className="md:hidden w-11 h-11 rounded-full flex items-center justify-center text-dark-900 hover:bg-light-200"
+            aria-expanded={isMobileMenuOpen}
+            aria-label={isMobileMenuOpen ? "Close main menu" : "Open main menu"}
+          >
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <span className="sr-only">Open main menu</span>
-              {/* Hamburger icon */}
-              <svg
-                className={`${isMobileMenuOpen ? "hidden" : "block"} h-6 w-6`}
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-              {/* Close icon */}
-              <svg
-                className={`${isMobileMenuOpen ? "block" : "hidden"} h-6 w-6`}
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
+              {isMobileMenuOpen ? (
+                <path d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
         </div>
       </div>
 
       {/* Mobile menu */}
-      <div className={`${isMobileMenuOpen ? "block" : "hidden"} md:hidden`}>
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
-          <Link
-            href="/products?gender=men"
-            className="text-gray-900 hover:text-gray-700 block px-3 py-2 text-base font-medium"
-          >
-            Men
-          </Link>
-          <Link
-            href="/products?gender=women"
-            className="text-gray-900 hover:text-gray-700 block px-3 py-2 text-base font-medium"
-          >
-            Women
-          </Link>
-          <Link
-            href="/products?gender=kids"
-            className="text-gray-900 hover:text-gray-700 block px-3 py-2 text-base font-medium"
-          >
-            Kids
-          </Link>
-          <Link
-            href="/collections"
-            className="text-gray-900 hover:text-gray-700 block px-3 py-2 text-base font-medium"
-          >
-            Collections
-          </Link>
-          <Link
-            href="/contact"
-            className="text-gray-900 hover:text-gray-700 block px-3 py-2 text-base font-medium"
-          >
-            Contact
-          </Link>
-          <div className="border-t border-gray-200 pt-4">
-            <a
-              href="#"
-              className="text-gray-900 hover:text-gray-700 block px-3 py-2 text-base font-medium"
+      {isMobileMenuOpen && (
+        <div className="md:hidden px-4 pt-2 pb-4 bg-white border-b border-light-300">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block px-3 py-2.5 text-body-medium text-dark-900"
             >
-              Search
-            </a>
-            <div className="px-3 py-2">
-              <CartIcon />
-            </div>
-            {loading ? (
-              <div className="flex items-center space-x-2 text-gray-500 px-3 py-2 text-base font-medium">
-                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-                <span>Loading...</span>
-              </div>
-            ) : user ? (
-              <div className="space-y-2">
-                <div className="text-gray-700 px-3 py-2 text-base font-medium">
+              {link.label}
+            </Link>
+          ))}
+          <div className="border-t border-light-300 mt-2 pt-2">
+            {loading ? null : user ? (
+              <>
+                <div className="px-3 py-2 text-body text-dark-700">
                   Welcome, {user.name || user.email}
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center space-x-2 text-gray-900 hover:text-gray-700 w-full px-3 py-2 text-base font-medium"
+                  className="flex items-center gap-2 w-full px-3 py-2.5 text-body-medium text-dark-900"
                 >
                   <FaSignOutAlt className="w-4 h-4" />
                   <span>Sign Out</span>
                 </button>
-              </div>
+              </>
             ) : (
               <Link
                 href="/sign-in"
-                className="flex items-center space-x-2 text-gray-900 hover:text-gray-700 px-3 py-2 text-base font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2.5 text-body-medium text-dark-900"
               >
                 <FaUser className="w-4 h-4" />
                 <span>Sign In</span>
@@ -228,7 +166,7 @@ export default function Navbar() {
             )}
           </div>
         </div>
-      </div>
+      )}
     </nav>
   );
 }

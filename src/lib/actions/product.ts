@@ -496,3 +496,82 @@ export async function getRecommendedProducts(
     return [];
   }
 }
+
+export interface FeaturedProduct {
+  id: string;
+  name: string;
+  gender: string;
+  image: string | null;
+  // The default variant (or the cheapest in-stock one) that quick-add puts in the bag
+  variant: {
+    id: string;
+    price: number;
+    salePrice: number | null;
+    inStock: number;
+    color: string;
+    size: string;
+  } | null;
+}
+
+/**
+ * Get the newest published products with one purchasable variant each, for the home carousel
+ */
+export async function getFeaturedProducts(
+  limit = 8
+): Promise<FeaturedProduct[]> {
+  try {
+    const db = getDb();
+    const result = await db.execute(sql`
+      SELECT
+        p.id,
+        p.name,
+        g.label AS gender,
+        (
+          SELECT pi.url
+          FROM product_images pi
+          WHERE pi.product_id = p.id
+          ORDER BY pi.is_primary DESC, pi.sort_order ASC
+          LIMIT 1
+        ) AS image,
+        v.id AS variant_id,
+        v.price,
+        v.sale_price,
+        v.in_stock,
+        c.name AS color,
+        s.name AS size
+      FROM products p
+      LEFT JOIN genders g ON g.id = p.gender_id
+      LEFT JOIN LATERAL (
+        SELECT pv.*
+        FROM product_variants pv
+        WHERE pv.product_id = p.id
+        ORDER BY (pv.id = p.default_variant_id) DESC, (pv.in_stock > 0) DESC, pv.price ASC
+        LIMIT 1
+      ) v ON true
+      LEFT JOIN colors c ON c.id = v.color_id
+      LEFT JOIN sizes s ON s.id = v.size_id
+      WHERE p.is_published = true
+      ORDER BY p.created_at DESC
+      LIMIT ${limit}
+    `);
+
+    return result.rows.map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      name: row.name as string,
+      gender: (row.gender as string | null) ?? "",
+      image: row.image as string | null,
+      variant: row.variant_id
+        ? {
+            id: row.variant_id as string,
+            price: Number(row.price),
+            salePrice: row.sale_price == null ? null : Number(row.sale_price),
+            inStock: Number(row.in_stock),
+            color: (row.color as string | null) ?? "",
+            size: (row.size as string | null) ?? "",
+          }
+        : null,
+    }));
+  } catch {
+    return [];
+  }
+}

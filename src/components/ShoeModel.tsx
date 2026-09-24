@@ -1,66 +1,79 @@
 "use client";
 
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
+import { Center, ContactShadows, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
-interface ShoeModelProps {
-  scale?: [number, number, number];
-  position?: [number, number, number];
-  rotation?: [number, number, number];
+const MODEL_URL = "/model/nike_dunk_hawaii_-_6k_triangles.glb";
+const DEG = Math.PI / 180;
+
+/** Mutable input the scene writes to and the model reads every frame. */
+export interface ShoeMotion {
+  /** Cursor position across the window, -0.5..0.5 */
+  mx: number;
+  my: number;
+  /** Extra yaw from dragging, in radians */
+  dragYaw: number;
+  dragging: boolean;
+  releasedAt: number;
+  /** False when the user prefers reduced motion */
+  animate: boolean;
 }
 
-export default function ShoeModel({
-  scale = [1.5, 1.5, 1.5],
-  position = [5, 0, 0],
-  rotation = [0, 0, 0],
-}: ShoeModelProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
+interface ShoeModelProps {
+  motion: React.RefObject<ShoeMotion>;
+  /** The longest side of the shoe, in world units */
+  size?: number;
+}
 
-  console.log("ShoeModel props:", { scale, position, rotation });
+export default function ShoeModel({ motion, size = 3.4 }: ShoeModelProps) {
+  const spinRef = useRef<THREE.Group>(null);
+  const { scene } = useGLTF(MODEL_URL);
 
-  // Load the GLB model
-  const gltf = useGLTF("/model/nike_dunk_hawaii_-_6k_triangles.glb");
+  const scale = useMemo(() => {
+    const dims = new THREE.Box3().setFromObject(scene).getSize(new THREE.Vector3());
+    return size / Math.max(dims.x, dims.y, dims.z);
+  }, [scene, size]);
 
-  // Animation loop
-  useFrame((state) => {
-    if (meshRef.current) {
-      // Gentle rotation animation
-      meshRef.current.rotation.y =
-        Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
+  useFrame((state, delta) => {
+    const group = spinRef.current;
+    const m = motion.current;
+    if (!group || !m) return;
+
+    // Let go of a drag for 2.5s and the shoe drifts back to the scroll-driven angle
+    if (!m.dragging && performance.now() - m.releasedAt > 2500) {
+      m.dragYaw = THREE.MathUtils.damp(m.dragYaw, 0, 2, delta);
     }
+
+    let yaw = 25 * DEG;
+    let pitch = 0;
+    if (m.animate) {
+      const t = state.clock.elapsedTime * 1000;
+      yaw += (window.scrollY * 0.32 + Math.sin(t / 2600) * 10 + m.mx * 28) * DEG;
+      pitch = m.my * 10 * DEG;
+    }
+    yaw += m.dragYaw;
+
+    group.rotation.y = m.dragging ? yaw : THREE.MathUtils.damp(group.rotation.y, yaw, 6, delta);
+    group.rotation.x = THREE.MathUtils.damp(group.rotation.x, pitch, 6, delta);
   });
 
   return (
     <>
-      {/* Lighting */}
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
-      <pointLight position={[-10, -10, -5]} intensity={0.5} />
+      <ambientLight intensity={0.9} />
+      <directionalLight position={[5, 8, 5]} intensity={1.6} />
+      <directionalLight position={[-6, 2, -4]} intensity={0.5} />
 
-      {/* Shoe Model */}
-      <group
-        position={position}
-        rotation={[
-          (rotation[0] * Math.PI) / 180,
-          (rotation[1] * Math.PI) / 180,
-          (rotation[2] * Math.PI) / 180,
-        ]}
-      >
-        <primitive ref={meshRef} object={gltf.scene} scale={scale} />
+      <group ref={spinRef}>
+        <Center scale={scale}>
+          <primitive object={scene} />
+        </Center>
       </group>
 
-      {/* Camera Controls */}
-      <OrbitControls
-        enableZoom={false}
-        enablePan={false}
-        autoRotate
-        autoRotateSpeed={0.5}
-        maxPolarAngle={Math.PI / 2}
-        minPolarAngle={Math.PI / 3}
-        target={position}
-      />
+      <ContactShadows position={[0, -1.1, 0]} opacity={0.45} scale={7} blur={2.6} far={3} />
     </>
   );
 }
+
+useGLTF.preload(MODEL_URL);
