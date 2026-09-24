@@ -60,7 +60,10 @@ export default function MockCheckoutForm({
       }));
 
   const fillDemoDetails = () => {
-    const nextYear = String((new Date().getFullYear() + 1) % 100).padStart(2, "0");
+    const nextYear = String((new Date().getFullYear() + 1) % 100).padStart(
+      2,
+      "0"
+    );
     setForm({
       email: defaultEmail || "demo@example.com",
       fullName: "Jordan Demo",
