@@ -13,6 +13,7 @@ import {
 import { getCurrentUser, createGuestSession } from "@/lib/auth/actions";
 import { eq, and, desc } from "drizzle-orm";
 import { cookies } from "next/headers";
+import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 
@@ -155,7 +156,8 @@ async function getOrCreateCart(
       success: true,
       data: { cartId },
     };
-  } catch (_error) {
+  } catch (error) {
+    unstable_rethrow(error);
     return {
       success: false,
       error: "Failed to get or create cart",
@@ -231,7 +233,8 @@ export async function getCart(): Promise<ActionResult<CartItemWithDetails[]>> {
         inStock: item.inStock,
       })),
     };
-  } catch (_error) {
+  } catch (error) {
+    unstable_rethrow(error);
     return {
       success: false,
       error: "Failed to get cart items",

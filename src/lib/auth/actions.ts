@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { db } from "@/lib/db";
 import {
   user,
@@ -409,6 +409,8 @@ export async function getCurrentUser(): Promise<
       data: { user: userSession.user },
     };
   } catch (error) {
+    // Let Next.js see dynamic API usage (cookies) during prerendering
+    unstable_rethrow(error);
     console.error("Get current user error:", error);
     return {
       success: false,
