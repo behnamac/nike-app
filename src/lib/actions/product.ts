@@ -118,8 +118,12 @@ export async function getAllProducts(
     if (categoryId && categoryId.length > 0) {
       whereConditions.push(inArray(products.categoryId, categoryId));
     }
-    if (genderId && genderId.length > 0) {
-      whereConditions.push(inArray(products.genderId, genderId));
+    // An empty array means gender slugs were requested but none matched a
+    // gender in the DB, so nothing should match (instead of dropping the filter).
+    if (genderId) {
+      whereConditions.push(
+        genderId.length > 0 ? inArray(products.genderId, genderId) : sql`false`
+      );
     }
     if (brandId && brandId.length > 0) {
       whereConditions.push(inArray(products.brandId, brandId));
@@ -145,8 +149,10 @@ export async function getAllProducts(
     if (categoryId && categoryId.length > 0) {
       productsWhereConditions.push(inArray(products.categoryId, categoryId));
     }
-    if (genderId && genderId.length > 0) {
-      productsWhereConditions.push(inArray(products.genderId, genderId));
+    if (genderId) {
+      productsWhereConditions.push(
+        genderId.length > 0 ? inArray(products.genderId, genderId) : sql`false`
+      );
     }
     if (brandId && brandId.length > 0) {
       productsWhereConditions.push(inArray(products.brandId, brandId));

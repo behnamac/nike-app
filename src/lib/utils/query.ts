@@ -291,8 +291,9 @@ async function convertGenderSlugsToIds(
 export async function parseProductFilters(
   searchParams: URLSearchParams
 ): Promise<ProductFilters> {
+  // The Filters sidebar writes repeated keys (?gender=men&gender=women), so parse
+  // with the default "none" format. "bracket" would keep only the last value.
   const params = queryString.parse(searchParams.toString(), {
-    arrayFormat: "bracket",
     parseNumbers: false, // Don't parse numbers to keep size as string
   });
 
