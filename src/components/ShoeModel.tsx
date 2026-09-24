@@ -1,12 +1,14 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { Center, ContactShadows, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
 const MODEL_URL = "/model/nike_dunk_hawaii_-_6k_triangles.glb";
 const DEG = Math.PI / 180;
+/** How far the shoe (and its shadow) sit above the scene origin */
+const LIFT = 0.45;
 
 /** Mutable input the scene writes to and the model reads every frame. */
 export interface ShoeMotion {
@@ -23,12 +25,14 @@ export interface ShoeMotion {
 
 interface ShoeModelProps {
   motion: React.RefObject<ShoeMotion>;
-  /** The longest side of the shoe, in world units */
+  /** The longest side of the shoe, in world units. Defaults to a smaller size on narrow canvases */
   size?: number;
 }
 
-export default function ShoeModel({ motion, size = 3.4 }: ShoeModelProps) {
+export default function ShoeModel({ motion, size: sizeProp }: ShoeModelProps) {
   const spinRef = useRef<THREE.Group>(null);
+  const isMobile = useThree((state) => state.size.width < 640);
+  const size = sizeProp ?? (isMobile ? 3.0 : 4.2);
   const { scene } = useGLTF(MODEL_URL);
 
   const scale = useMemo(() => {
@@ -65,13 +69,15 @@ export default function ShoeModel({ motion, size = 3.4 }: ShoeModelProps) {
       <directionalLight position={[5, 8, 5]} intensity={1.6} />
       <directionalLight position={[-6, 2, -4]} intensity={0.5} />
 
-      <group ref={spinRef}>
-        <Center scale={scale}>
-          <primitive object={scene} />
-        </Center>
+      <group position-y={LIFT}>
+        <group ref={spinRef}>
+          <Center scale={scale}>
+            <primitive object={scene} />
+          </Center>
+        </group>
       </group>
 
-      <ContactShadows position={[0, -1.1, 0]} opacity={0.45} scale={7} blur={2.6} far={3} />
+      <ContactShadows position={[0, LIFT - 1.3, 0]} opacity={0.45} scale={8.5} blur={2.6} far={3} />
     </>
   );
 }
