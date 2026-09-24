@@ -15,6 +15,7 @@ import { getCurrentUser } from "@/lib/auth/actions";
 import { getCart } from "./cart";
 import { cookies } from "next/headers";
 import { v4 as uuidv4 } from "uuid";
+import { calculateOrderTotals } from "@/lib/utils/pricing";
 
 export interface ActionResult<T> {
   success: boolean;
@@ -89,14 +90,7 @@ export async function createOrder(
       };
     }
 
-    // Calculate total amount
-    const subtotal = items.reduce(
-      (total, item) => total + (item.salePrice || item.price) * item.quantity,
-      0
-    );
-    const shipping = subtotal >= 7500 ? 0 : 999; // $75.00 in cents
-    const tax = Math.round(subtotal * 0.08); // 8% tax
-    const totalAmount = subtotal + shipping + tax;
+    const { total: totalAmount } = calculateOrderTotals(items);
 
     // Create order
     const [newOrder] = await db
@@ -106,7 +100,7 @@ export async function createOrder(
         guestId: guestId,
         stripeSessionId,
         status: "paid",
-        totalAmount: (totalAmount / 100).toString(), // Convert from cents to dollars and to string
+        totalAmount: totalAmount.toFixed(2),
       })
       .returning();
 
@@ -115,7 +109,7 @@ export async function createOrder(
       orderId: newOrder.id,
       productVariantId: item.productVariantId,
       quantity: item.quantity,
-      priceAtPurchase: ((item.salePrice || item.price) / 100).toString(), // Convert from cents to dollars and to string
+      priceAtPurchase: (item.salePrice || item.price).toFixed(2),
     }));
 
     await db.insert(orderItems).values(orderItemsData);

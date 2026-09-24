@@ -1,10 +1,14 @@
 "use server";
 
 import { stripe } from "@/lib/stripe/client";
-import { getCart } from "./cart";
+import { getCart, clearCart } from "./cart";
 import { getCurrentUser } from "@/lib/auth/actions";
 import { mergeGuestCartWithUserCart } from "@/lib/auth/actions";
 import { cookies } from "next/headers";
+import { z } from "zod";
+import { v4 as uuidv4 } from "uuid";
+import { calculateOrderTotals } from "@/lib/utils/pricing";
+import { createOrder } from "./orders";
 
 export interface ActionResult<T> {
   success: boolean;
@@ -57,13 +61,10 @@ export async function createStripeCheckoutSession(
       };
     }
 
-    // Calculate totals
-    const subtotal = items.reduce(
-      (total, item) => total + (item.salePrice || item.price) * item.quantity,
-      0
-    );
-    const shipping = subtotal >= 7500 ? 0 : 999; // $75.00 in cents
-    const tax = Math.round(subtotal * 0.08); // 8% tax
+    // Stripe expects cents
+    const totals = calculateOrderTotals(items);
+    const shipping = Math.round(totals.shipping * 100);
+    const tax = Math.round(totals.tax * 100);
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
@@ -134,5 +135,99 @@ export async function createStripeCheckoutSession(
       success: false,
       error: "Failed to create checkout session",
     };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Mock payments (used while PAYMENT_MODE is "mock", see lib/payments/config.ts)
+// ---------------------------------------------------------------------------
+
+// Test cards: anything that passes the Luhn check succeeds, except these.
+const DECLINED_CARD = "4000000000000002";
+const INSUFFICIENT_FUNDS_CARD = "4000000000009995";
+
+const passesLuhn = (digits: string) => {
+  let sum = 0;
+  for (let i = 0; i < digits.length; i++) {
+    let d = Number(digits[digits.length - 1 - i]);
+    if (i % 2 === 1) {
+      d *= 2;
+      if (d > 9) d -= 9;
+    }
+    sum += d;
+  }
+  return sum % 10 === 0;
+};
+
+const mockCheckoutSchema = z.object({
+  email: z.string().email("Enter a valid email"),
+  fullName: z.string().trim().min(2, "Enter your full name"),
+  address: z.string().trim().min(3, "Enter your street address"),
+  city: z.string().trim().min(2, "Enter your city"),
+  postalCode: z.string().trim().min(3, "Enter your postal code"),
+  country: z.string().trim().min(2, "Enter your country"),
+  cardNumber: z
+    .string()
+    .transform((v) => v.replace(/\s+/g, ""))
+    .refine((v) => /^\d{13,19}$/.test(v) && passesLuhn(v), "Invalid card number"),
+  expiry: z
+    .string()
+    .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Use MM/YY")
+    .refine((v) => {
+      const [mm, yy] = v.split("/").map(Number);
+      // Card is valid through the end of its expiry month
+      return new Date(2000 + yy, mm, 1) > new Date();
+    }, "Card has expired"),
+  cvc: z.string().regex(/^\d{3,4}$/, "Invalid CVC"),
+});
+
+export type MockCheckoutInput = z.input<typeof mockCheckoutSchema>;
+
+export async function completeMockCheckout(
+  input: MockCheckoutInput
+): Promise<ActionResult<{ sessionId: string }>> {
+  const parsed = mockCheckoutSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  // Simulate processor latency
+  await new Promise((resolve) => setTimeout(resolve, 1200));
+
+  if (parsed.data.cardNumber === DECLINED_CARD) {
+    return { success: false, error: "Your card was declined." };
+  }
+  if (parsed.data.cardNumber === INSUFFICIENT_FUNDS_CARD) {
+    return { success: false, error: "Your card has insufficient funds." };
+  }
+
+  try {
+    const userResult = await getCurrentUser();
+    if (userResult.success && userResult.data) {
+      const guestSessionToken = (await cookies()).get("guest_session")?.value;
+      if (guestSessionToken) {
+        await mergeGuestCartWithUserCart(
+          guestSessionToken,
+          userResult.data.user.id
+        );
+      }
+    }
+
+    // Stands in for the Stripe session id (the column is a uuid)
+    const sessionId = uuidv4();
+    const orderResult = await createOrder(sessionId);
+    if (!orderResult.success) {
+      return {
+        success: false,
+        error: orderResult.error || "Failed to create order",
+      };
+    }
+
+    await clearCart();
+
+    return { success: true, data: { sessionId } };
+  } catch (error) {
+    console.error("Mock checkout error:", error);
+    return { success: false, error: "Failed to complete checkout" };
   }
 }

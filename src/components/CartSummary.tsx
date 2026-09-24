@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCartStore } from "@/store/cart.store";
 import { CartItemWithDetails } from "@/lib/actions/cart";
 import { createStripeCheckoutSession } from "@/lib/actions/checkout";
+import { isMockPayments } from "@/lib/payments/config";
 
 interface CartSummaryProps {
   items: CartItemWithDetails[];
@@ -13,6 +15,7 @@ interface CartSummaryProps {
 
 export default function CartSummary({ items }: CartSummaryProps) {
   const { getTotalItems, getTotalPrice } = useCartStore();
+  const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const totalItems = getTotalItems();
@@ -24,6 +27,11 @@ export default function CartSummary({ items }: CartSummaryProps) {
   const handleCheckout = async () => {
     if (items.length === 0) {
       alert("Your cart is empty");
+      return;
+    }
+
+    if (isMockPayments) {
+      router.push("/checkout");
       return;
     }
 
