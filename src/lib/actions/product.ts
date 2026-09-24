@@ -67,14 +67,6 @@ export interface GetAllProductsResult {
 export async function getAllProducts(
   filters: ProductFilters = {}
 ): Promise<GetAllProductsResult> {
-  // Check if database is available, fallback to mock data if not
-  try {
-    // Test database connection
-    const db = getDb();
-    await db.execute(sql`SELECT 1`);
-  } catch (_error) {
-    return await getMockProducts(filters);
-  }
   try {
     const {
       search,
@@ -186,7 +178,7 @@ export async function getAllProducts(
         primaryImage: sql<string>`(
           SELECT pi.url
           FROM product_images pi
-          WHERE pi.product_id = p.id
+          WHERE pi.product_id = ${products.id}
           AND pi.is_primary = true
           LIMIT 1
         )`,
@@ -217,7 +209,7 @@ export async function getAllProducts(
       pv.color_id
     FROM product_images pi
     LEFT JOIN product_variants pv ON pi.variant_id = pv.id
-    WHERE pi.product_id = ANY(${productIds})
+    WHERE pi.product_id IN ${productIds}
     ORDER BY pi.product_id, pi.is_primary DESC, pi.sort_order ASC
   `)
         : { rows: [] };
@@ -294,7 +286,7 @@ export async function getAllProducts(
       hasMore: offset + limit < totalCount,
     };
   } catch (_error) {
-    return await getMockProducts(filters);
+    return { products: [], totalCount: 0, hasMore: false };
   }
 }
 
@@ -302,14 +294,6 @@ export async function getAllProducts(
  * Get a single product with full details
  */
 export async function getProduct(productId: string) {
-  try {
-    // Test database connection
-    const db = getDb();
-    await db.execute(sql`SELECT 1`);
-  } catch (_error) {
-    return getMockProduct(productId);
-  }
-
   try {
     const db = getDb();
     const productQuery = await db.execute(sql`
@@ -382,7 +366,7 @@ export async function getProduct(productId: string) {
       images: imagesQuery.rows,
     };
   } catch (_error) {
-    return getMockProduct(productId);
+    return null;
   }
 }
 
@@ -390,14 +374,6 @@ export async function getProduct(productId: string) {
  * Get product reviews
  */
 export async function getProductReviews(productId: string): Promise<Review[]> {
-  try {
-    // Test database connection
-    const db = getDb();
-    await db.execute(sql`SELECT 1`);
-  } catch (_error) {
-    return [];
-  }
-
   try {
     const db = getDb();
     const reviewsResult = await db.execute(sql`
@@ -434,14 +410,6 @@ export async function getProductReviews(productId: string): Promise<Review[]> {
 export async function getRecommendedProducts(
   productId: string
 ): Promise<ProductWithDetails[]> {
-  try {
-    // Test database connection
-    const db = getDb();
-    await db.execute(sql`SELECT 1`);
-  } catch (_error) {
-    return [];
-  }
-
   try {
     // Get products in the same category/brand/gender, excluding current product
     const db = getDb();
@@ -527,281 +495,4 @@ export async function getRecommendedProducts(
   } catch (_error) {
     return [];
   }
-}
-
-/**
- * Fallback function that returns mock data when database is not available
- */
-async function getMockProducts(
-  filters: ProductFilters
-): Promise<GetAllProductsResult> {
-  // Import mock data
-  const { mockProducts } = await import("@/lib/data/mock-products");
-
-  // Simple filtering logic for mock data
-  let filteredProducts = mockProducts;
-
-  if (filters.search) {
-    filteredProducts = filteredProducts.filter((product) =>
-      product.name.toLowerCase().includes(filters.search!.toLowerCase())
-    );
-  }
-
-  if (filters.categoryId && filters.categoryId.length > 0) {
-    filteredProducts = filteredProducts.filter((product) =>
-      filters.categoryId!.includes(product.category)
-    );
-  }
-
-  if (filters.genderId && filters.genderId.length > 0) {
-    // For mock data, we need to convert database IDs back to gender slugs
-    // Since we don't have access to the database mapping in mock mode,
-    // we'll use a simple approach: check if the ID contains the gender name
-    const genderSlugs: string[] = [];
-
-    for (const id of filters.genderId) {
-      // Check if the ID contains gender indicators
-      if (id.includes("men") || id.toLowerCase().includes("men")) {
-        genderSlugs.push("men");
-      } else if (id.includes("women") || id.toLowerCase().includes("women")) {
-        genderSlugs.push("women");
-      } else if (id.includes("kids") || id.toLowerCase().includes("kids")) {
-        genderSlugs.push("kids");
-      } else if (id.includes("unisex") || id.toLowerCase().includes("unisex")) {
-        genderSlugs.push("unisex");
-      } else {
-        // If it's already a slug (like 'men', 'women', 'kids', 'unisex'), use it directly
-        genderSlugs.push(id);
-      }
-    }
-
-    // If no conversion happened (UUIDs don't contain gender words),
-    // use the original gender slugs
-    if (genderSlugs.length === 0 || genderSlugs[0] === filters.genderId[0]) {
-      // For mock data, use the original gender slugs from the URL
-      if (
-        filters.originalGenderSlugs &&
-        filters.originalGenderSlugs.length > 0
-      ) {
-        filteredProducts = filteredProducts.filter((product) =>
-          filters.originalGenderSlugs!.includes(product.gender)
-        );
-      } else {
-        // No gender slugs available, show all products
-      }
-    } else {
-      filteredProducts = filteredProducts.filter((product) =>
-        genderSlugs.includes(product.gender)
-      );
-    }
-  }
-
-  if (filters.brandId && filters.brandId.length > 0) {
-    filteredProducts = filteredProducts.filter((product) =>
-      filters.brandId!.includes(product.brand)
-    );
-  }
-
-  // Size filter
-  if (filters.sizeId && filters.sizeId.length > 0) {
-    filteredProducts = filteredProducts.filter((product) => {
-      const productSizes = product.variants.map((v) => v.size);
-      const hasMatchingSize = filters.sizeId!.some((size) =>
-        productSizes.includes(size)
-      );
-      return hasMatchingSize;
-    });
-  }
-
-  // Simple sorting
-  if (filters.sortBy) {
-    switch (filters.sortBy) {
-      case "price_asc":
-        filteredProducts.sort((a, b) => {
-          const aPrice = Math.min(...a.variants.map((v) => v.price));
-          const bPrice = Math.min(...b.variants.map((v) => v.price));
-          return aPrice - bPrice;
-        });
-        break;
-      case "price_desc":
-        filteredProducts.sort((a, b) => {
-          const aPrice = Math.min(...a.variants.map((v) => v.price));
-          const bPrice = Math.min(...b.variants.map((v) => v.price));
-          return bPrice - aPrice;
-        });
-        break;
-      case "name_asc":
-        filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "name_desc":
-        filteredProducts.sort((a, b) => b.name.localeCompare(a.name));
-        break;
-    }
-  }
-
-  // Pagination
-  const page = filters.page || 1;
-  const limit = filters.limit || 24;
-  const offset = (page - 1) * limit;
-  const paginatedProducts = filteredProducts.slice(offset, offset + limit);
-
-  // Convert mock products to the expected format
-  const products: ProductWithDetails[] = paginatedProducts.map((product) => {
-    const minPrice = Math.min(...product.variants.map((v) => v.price));
-    const maxPrice = Math.max(...product.variants.map((v) => v.price));
-    const primaryImage =
-      product.images.find((img) => img.isPrimary)?.url ||
-      product.images[0]?.url;
-
-    return {
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      categoryId: product.category,
-      genderId: product.gender,
-      brandId: product.brand,
-      isPublished: product.isPublished,
-      defaultVariantId: product.defaultVariantId,
-      createdAt: product.createdAt,
-      updatedAt: product.updatedAt,
-      minPrice,
-      maxPrice,
-      primaryImage,
-      category: {
-        id: product.category,
-        name:
-          product.category.charAt(0).toUpperCase() + product.category.slice(1),
-        slug: product.category,
-      },
-      gender: {
-        id: product.gender,
-        label: product.gender.charAt(0).toUpperCase() + product.gender.slice(1),
-        slug: product.gender,
-      },
-      brand: {
-        id: product.brand,
-        name: product.brand.charAt(0).toUpperCase() + product.brand.slice(1),
-        slug: product.brand,
-      },
-      images: product.images.slice(0, 5).map((img) => ({
-        id: img.id,
-        url: img.url,
-        isPrimary: img.isPrimary,
-        sortOrder: img.sortOrder,
-      })),
-    };
-  });
-
-  return {
-    products,
-    totalCount: filteredProducts.length,
-    hasMore: offset + limit < filteredProducts.length,
-  };
-}
-
-/**
- * Get a single mock product by ID
- */
-async function getMockProduct(productId: string) {
-  const { mockProducts } = await import("@/lib/data/mock-products");
-
-  const product = mockProducts.find(
-    (p) => (p as unknown as Record<string, unknown>).id === productId
-  );
-
-  if (!product) {
-    return null;
-  }
-
-  // Create mock variants and images
-  const mockVariants = [
-    {
-      id: `${productId}-variant-1`,
-      product_id: productId,
-      color_id: "color-1",
-      size_id: "size-1",
-      price: (product as unknown as Record<string, unknown>).price as number,
-      sale_price: (product as unknown as Record<string, unknown>).salePrice as
-        | number
-        | null,
-      stock: 10,
-      in_stock: true,
-      color: {
-        id: "color-1",
-        name: "Black",
-        slug: "black",
-        hexCode: "#000000",
-      },
-      size: {
-        id: "size-1",
-        name: "M",
-        slug: "m",
-        sortOrder: 1,
-      },
-    },
-    {
-      id: `${productId}-variant-2`,
-      product_id: productId,
-      color_id: "color-2",
-      size_id: "size-2",
-      price: (product as unknown as Record<string, unknown>).price as number,
-      sale_price: (product as unknown as Record<string, unknown>).salePrice as
-        | number
-        | null,
-      stock: 5,
-      in_stock: true,
-      color: {
-        id: "color-2",
-        name: "White",
-        slug: "white",
-        hexCode: "#FFFFFF",
-      },
-      size: {
-        id: "size-2",
-        name: "L",
-        slug: "l",
-        sortOrder: 2,
-      },
-    },
-  ];
-
-  const mockImages = [
-    {
-      id: `${productId}-image-1`,
-      product_id: productId,
-      variant_id: `${productId}-variant-1`,
-      url: (product as unknown as Record<string, unknown>).image as string,
-      is_primary: true,
-      sort_order: 1,
-    },
-    {
-      id: `${productId}-image-2`,
-      product_id: productId,
-      variant_id: `${productId}-variant-2`,
-      url: (product as unknown as Record<string, unknown>).image as string,
-      is_primary: false,
-      sort_order: 2,
-    },
-  ];
-
-  return {
-    ...product,
-    variants: mockVariants,
-    images: mockImages,
-    category: {
-      id: "category-1",
-      name: product.category as string,
-      slug: (product.category as string).toLowerCase().replace(/\s+/g, "-"),
-    },
-    gender: {
-      id: "gender-1",
-      label: "Men",
-      slug: "men",
-    },
-    brand: {
-      id: "brand-1",
-      name: "Nike",
-      slug: "nike",
-    },
-  };
 }

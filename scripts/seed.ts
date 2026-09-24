@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import * as schema from "../src/lib/db/schema";
 import { v4 as uuidv4 } from "uuid";
+import { inArray } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
@@ -215,8 +216,35 @@ async function seed() {
   try {
     console.log("🌱 Starting database seed...");
 
+    // Wipe existing catalog data so the seed can be re-run
+    console.log("🧹 Clearing existing catalog data...");
+    await db.delete(schema.cartItems);
+    await db.delete(schema.reviews);
+    await db.delete(schema.coupons);
+    await db
+      .delete(schema.user)
+      .where(
+        inArray(schema.user.email, [
+          "john@example.com",
+          "jane@example.com",
+          "mike@example.com",
+        ])
+      );
+    await db.delete(schema.productCollections);
+    await db.delete(schema.productImages);
+    await db.delete(schema.productVariants);
+    await db.delete(schema.products);
+    await db.delete(schema.collections);
+    await db.delete(schema.brands);
+    await db.delete(schema.categories);
+    await db.delete(schema.sizes);
+    await db.delete(schema.colors);
+    await db.delete(schema.genders);
+
     // Create static uploads directory
     const uploadsDir = path.join(process.cwd(), "static", "uploads");
+    // Old images belong to product ids that were just wiped
+    fs.rmSync(uploadsDir, { recursive: true, force: true });
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
       console.log("📁 Created static/uploads directory");
@@ -356,7 +384,7 @@ async function seed() {
             const size = sizes.find((s) => s.name === sizeName);
             if (!size) continue;
 
-            const sku = `NIKE-${product[0].name.replace(/\s+/g, "").toUpperCase()}-${color.slug}-${size.slug}`;
+            const sku = `NIKE-${product[0].name.replace(/\s+/g, "").toUpperCase()}-${gender.slug}-${color.slug}-${size.slug}`;
 
             await db.insert(schema.productVariants).values({
               productId: product[0].id,

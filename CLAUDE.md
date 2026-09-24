@@ -17,7 +17,7 @@ npx tsc --noEmit         # type check (no dedicated script)
 npm run db:generate      # drizzle-kit generate -> ./drizzle
 npm run db:push          # push schema straight to the DB
 npm run db:migrate       # apply generated migrations
-npm run db:seed          # tsx scripts/seed.ts (wipes and reseeds catalog, copies images)
+npm run db:seed          # tsx scripts/seed.ts (wipes and reseeds catalog, carts, coupons, sample users; copies images)
 npm run db:migrate-auth  # tsx scripts/migrate-auth.ts
 ```
 
@@ -40,11 +40,9 @@ There is no test framework. Check changes with `npm run lint`, `npx tsc --noEmit
 - Catalog model: `products` → `productVariants` (color, size, price, salePrice, stock) and `productImages`. A product has a `defaultVariantId`. Prices and images come from variants and images, not from the product row.
 - `drizzle/schema.ts` and `drizzle/relations.ts` are an old introspection (a flat `products` table with a serial id). Don't use them.
 
-### Mock-data fallback (important)
-The app is built to run without a working database:
-- `getAllProducts` and related functions in `src/lib/actions/product.ts` run `SELECT 1` first and fall back to `src/lib/data/mock-products.ts` if it fails.
-- For cart operations, `src/store/cart.store.ts` (a Zustand store persisted to localStorage) dynamically imports the server actions in `src/lib/actions/cart.ts`. On failure it falls back to `src/lib/actions/mock-cart.ts`, an in-memory Map keyed by the `mock_cart_id` cookie.
-- The cart and product pages follow the same pattern. When you change a data shape, update both the DB path and the mock path, and keep `CartItem` / `CartItemWithDetails` / `MockCartItem` in sync.
+### Cart state
+- The database is the only data source (there is no mock fallback). `src/store/cart.store.ts` is a Zustand store persisted to localStorage that calls the server actions in `src/lib/actions/cart.ts`. The `/cart` page (`CartContent`) overwrites the store with the DB cart on load, so the DB always wins over stale localStorage.
+- Keep `CartItem` (store) and `CartItemWithDetails` (actions) in sync.
 
 ### Server actions
 - Mutations and data fetching live in `src/lib/actions/*.ts` and `src/lib/auth/actions.ts` (`"use server"`). They return `ActionResult<T> = { success, data?, error? }` instead of throwing, and validate input with Zod.

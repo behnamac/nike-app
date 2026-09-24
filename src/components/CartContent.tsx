@@ -17,17 +17,17 @@ export default function CartContent({
   isAuthenticated,
 }: CartContentProps) {
   const storeItems = useCartStore((state) => state.items);
-  const [hydrated, setHydrated] = useState(false);
+  const setItems = useCartStore((state) => state.setItems);
+  const [synced, setSynced] = useState(false);
 
-  // The persisted store only has its localStorage items after mount
+  // The database cart is the source of truth: replace whatever the persisted
+  // store holds (possibly stale) with it, then render live store updates
   useEffect(() => {
-    setHydrated(true);
-  }, []);
+    setItems(initialItems);
+    setSynced(true);
+  }, [initialItems, setItems]);
 
-  // Server cart wins when it has items; otherwise show what the store holds
-  // (e.g. items kept in the in-memory mock cart that the server lost on restart)
-  const cartItems =
-    initialItems.length > 0 || !hydrated ? initialItems : storeItems;
+  const cartItems = synced ? storeItems : initialItems;
 
   return (
     <>

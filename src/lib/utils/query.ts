@@ -29,8 +29,6 @@ export interface ProductFilters {
   sortBy?: string;
   page?: number;
   limit?: number;
-  // For mock data fallback
-  originalGenderSlugs?: string[];
 }
 
 export interface SortOption {
@@ -344,8 +342,6 @@ export async function parseProductFilters(
     sortBy: typeof params.sort === "string" ? params.sort : "created_at_desc",
     page: typeof params.page === "number" ? params.page : 1,
     limit: typeof params.limit === "number" ? params.limit : 24,
-    // Pass the original gender slugs for mock data fallback
-    originalGenderSlugs: genderSlugs,
   };
 }
 
@@ -377,25 +373,15 @@ export async function convertToFilterParams(
   // Convert gender IDs back to slugs
   let genderSlugs: string[] | undefined;
   if (filters.genderId && filters.genderId.length > 0) {
-    try {
-      const mapping = await getGenderMapping();
-      if (Object.keys(mapping).length === 0) {
-        // No gender mapping available, use original gender slugs if available
-        genderSlugs = filters.originalGenderSlugs;
-      } else {
-        const reverseMapping: Record<string, string> = {};
-        Object.entries(mapping).forEach(([slug, id]) => {
-          reverseMapping[id] = slug;
-        });
+    const mapping = await getGenderMapping();
+    const reverseMapping: Record<string, string> = {};
+    Object.entries(mapping).forEach(([slug, id]) => {
+      reverseMapping[id] = slug;
+    });
 
-        genderSlugs = filters.genderId
-          .map((id) => reverseMapping[id])
-          .filter((slug): slug is string => slug !== undefined);
-      }
-    } catch (_error) {
-      // Fallback to original gender slugs
-      genderSlugs = filters.originalGenderSlugs;
-    }
+    genderSlugs = filters.genderId
+      .map((id) => reverseMapping[id])
+      .filter((slug): slug is string => slug !== undefined);
   }
 
   return {
