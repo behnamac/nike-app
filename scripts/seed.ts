@@ -441,12 +441,12 @@ async function seed() {
     await db.delete(schema.genders);
 
     // Create static uploads directory
-    const uploadsDir = path.join(process.cwd(), "static", "uploads");
+    const uploadsDir = path.join(process.cwd(), "public", "static", "uploads");
     // Old images belong to product ids that were just wiped
     fs.rmSync(uploadsDir, { recursive: true, force: true });
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
-      console.log("📁 Created static/uploads directory");
+      console.log("📁 Created public/static/uploads directory");
     }
 
     // Seed genders
