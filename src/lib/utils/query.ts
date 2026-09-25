@@ -1,6 +1,6 @@
 import queryString from "query-string";
 import { getDb } from "@/lib/db";
-import { genders } from "@/lib/db/schema";
+import { genders, categories } from "@/lib/db/schema";
 
 export interface FilterParams {
   search?: string;
@@ -288,6 +288,43 @@ async function convertGenderSlugsToIds(
 }
 
 /**
+ * Get category mapping from database
+ * This function fetches the actual category IDs from the database
+ */
+async function getCategoryMapping(): Promise<Record<string, string>> {
+  try {
+    if (!process.env.DATABASE_URL) {
+      return {};
+    }
+
+    const db = getDb();
+    const categoryRecords = await db.select().from(categories);
+    const mapping: Record<string, string> = {};
+
+    categoryRecords.forEach((category) => {
+      mapping[category.slug] = category.id;
+    });
+    return mapping;
+  } catch (_error) {
+    return {};
+  }
+}
+
+/**
+ * Convert category slugs to category IDs
+ * This function maps category slugs from URL parameters to actual database IDs
+ */
+async function convertCategorySlugsToIds(
+  categorySlugs: string[]
+): Promise<string[]> {
+  const mapping = await getCategoryMapping();
+  const result = categorySlugs
+    .map((slug) => mapping[slug])
+    .filter((id): id is string => id !== undefined);
+  return result;
+}
+
+/**
  * Parse URL search params into ProductFilters for database queries
  */
 export async function parseProductFilters(
@@ -316,13 +353,25 @@ export async function parseProductFilters(
     genderIds = undefined;
   }
 
+  // Handle category parameter - convert slugs (e.g. "sneakers") to DB IDs
+  const categorySlugs = Array.isArray(params.category)
+    ? params.category.filter((v): v is string => typeof v === "string")
+    : params.category && typeof params.category === "string"
+      ? [params.category]
+      : undefined;
+
+  let categoryIds: string[] | undefined;
+  try {
+    categoryIds = categorySlugs
+      ? await convertCategorySlugsToIds(categorySlugs)
+      : undefined;
+  } catch {
+    categoryIds = undefined;
+  }
+
   return {
     search: typeof params.search === "string" ? params.search : undefined,
-    categoryId: Array.isArray(params.category)
-      ? params.category.filter((v): v is string => typeof v === "string")
-      : params.category && typeof params.category === "string"
-        ? [params.category]
-        : undefined,
+    categoryId: categoryIds,
     genderId: genderIds,
     brandId: Array.isArray(params.brand)
       ? params.brand.filter((v): v is string => typeof v === "string")
@@ -393,13 +442,27 @@ export async function convertToFilterParams(
       .filter((slug): slug is string => slug !== undefined);
   }
 
+  // Convert category IDs back to slugs
+  let categorySlugs: string[] | undefined;
+  if (filters.categoryId && filters.categoryId.length > 0) {
+    const mapping = await getCategoryMapping();
+    const reverseMapping: Record<string, string> = {};
+    Object.entries(mapping).forEach(([slug, id]) => {
+      reverseMapping[id] = slug;
+    });
+
+    categorySlugs = filters.categoryId
+      .map((id) => reverseMapping[id])
+      .filter((slug): slug is string => slug !== undefined);
+  }
+
   return {
     search: filters.search,
     gender: genderSlugs,
     size: filters.sizeId,
     color: filters.colorId,
     price: filters.priceRanges,
-    category: filters.categoryId,
+    category: categorySlugs,
     brand: filters.brandId,
     sort: filters.sortBy,
     page: filters.page,

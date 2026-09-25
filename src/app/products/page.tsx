@@ -143,12 +143,12 @@ export default async function ProductsPage({
                       Max: ${filters.priceMax}
                     </span>
                   )}
-                  {filters.categoryId?.map((categoryId) => (
+                  {sidebarFilters.category?.map((categorySlug) => (
                     <span
-                      key={categoryId}
+                      key={categorySlug}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-red-100 text-red-800"
                     >
-                      Category: {categoryId}
+                      Category: {categorySlug}
                     </span>
                   ))}
                   {filters.brandId?.map((brandId) => (
