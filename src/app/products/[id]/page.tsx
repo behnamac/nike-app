@@ -1,14 +1,14 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Heart, ImageOff } from "lucide-react";
+import { ImageOff } from "lucide-react";
 import { getProduct } from "@/lib/actions/product";
 import ProductGallery from "@/components/ProductGallery";
-import SizePicker from "@/components/SizePicker";
 import CollapsibleSection from "@/components/CollapsibleSection";
-import ColorSelector from "@/components/ColorSelector";
 import ProductReviews from "@/components/ProductReviews";
 import RecommendedProducts from "@/components/RecommendedProducts";
-import AddToCart from "@/components/AddToCart";
+import ProductPurchasePanel, {
+  type PurchaseVariant,
+} from "@/components/ProductPurchasePanel";
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -44,18 +44,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
     );
   }
 
-  // Get default variant - use first variant if available
+  // Get default variant - prefer the product's configured default, fall back
+  // to the first variant
   const defaultVariant =
-    product.variants && product.variants.length > 0
+    product.variants?.find(
+      (v: Record<string, unknown>) =>
+        v.id === (product as Record<string, unknown>).default_variant_id
+    ) ??
+    (product.variants && product.variants.length > 0
       ? (product.variants[0] as Record<string, unknown>)
-      : null;
-
-  // Calculate min and max prices from variants
-  const prices =
-    product.variants?.map(
-      (v: Record<string, unknown>) => Number(v.price) || 0
-    ) || [];
-  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+      : null);
 
   // Get primary image
   const primaryImage =
@@ -123,180 +121,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </p>
             </div>
 
-            {/* Price & Discount */}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl font-bold text-gray-900">
-                  $
-                  {defaultVariant
-                    ? Number(
-                        (defaultVariant as Record<string, unknown>)?.sale_price
-                      ) ||
-                      Number(
-                        (defaultVariant as Record<string, unknown>)?.price
-                      ) ||
-                      minPrice
-                    : minPrice}
-                </span>
-                {Boolean(
-                  (defaultVariant as Record<string, unknown>)?.sale_price
-                ) &&
-                  Boolean(
-                    (defaultVariant as Record<string, unknown>)?.price
-                  ) && (
-                    <span className="text-xl text-gray-500 line-through">
-                      $
-                      {Number(
-                        (defaultVariant as Record<string, unknown>).price
-                      )}
-                    </span>
-                  )}
-              </div>
-              {Boolean(
-                (defaultVariant as Record<string, unknown>)?.sale_price
-              ) && (
-                <p className="text-sm text-green-600 font-medium">
-                  You save $
-                  {Number((defaultVariant as Record<string, unknown>).price) -
-                    Number(
-                      (defaultVariant as Record<string, unknown>).sale_price
-                    )}{" "}
-                  !
-                </p>
-              )}
-            </div>
-
-            {/* Color Selector */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-900">Color</h3>
-              <Suspense
-                fallback={
-                  <div className="flex space-x-2">
-                    {[...Array(7)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="w-8 h-8 bg-gray-200 rounded-full"
-                      />
-                    ))}
-                  </div>
+            {defaultVariant && (
+              <ProductPurchasePanel
+                variants={product.variants as unknown as PurchaseVariant[]}
+                defaultVariantId={
+                  (defaultVariant as Record<string, unknown>).id as string
                 }
-              >
-                <ColorSelector
-                  variants={product.variants.map(
-                    (v: Record<string, unknown>) => ({
-                      id: v.id as string,
-                      color: (v.color as Record<string, unknown>)
-                        .name as string,
-                      size: (v.size as Record<string, unknown>).name as string,
-                      price: Number(v.price),
-                      salePrice: v.sale_price
-                        ? Number(v.sale_price)
-                        : undefined,
-                      inStock: v.in_stock as number,
-                    })
-                  )}
-                  defaultVariant={
-                    defaultVariant
-                      ? {
-                          id: (defaultVariant as Record<string, unknown>)
-                            .id as string,
-                          color: (
-                            (defaultVariant as Record<string, unknown>)
-                              .color as Record<string, unknown>
-                          ).name as string,
-                          size: (
-                            (defaultVariant as Record<string, unknown>)
-                              .size as Record<string, unknown>
-                          ).name as string,
-                          price: Number(
-                            (defaultVariant as Record<string, unknown>).price
-                          ),
-                          salePrice: (defaultVariant as Record<string, unknown>)
-                            .sale_price
-                            ? Number(
-                                (defaultVariant as Record<string, unknown>)
-                                  .sale_price
-                              )
-                            : undefined,
-                          inStock: (defaultVariant as Record<string, unknown>)
-                            .in_stock as number,
-                        }
-                      : undefined
-                  }
-                />
-              </Suspense>
-            </div>
-
-            {/* Size Picker */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-900">
-                  Select Size
-                </h3>
-                <button className="text-sm text-gray-600 hover:text-gray-900 underline">
-                  Size Guide
-                </button>
-              </div>
-              <Suspense
-                fallback={
-                  <div className="grid grid-cols-5 gap-2">
-                    {[...Array(10)].map((_, i) => (
-                      <div key={i} className="h-10 bg-gray-200 rounded" />
-                    ))}
-                  </div>
+                productId={(product as Record<string, unknown>).id as string}
+                productName={
+                  (product as Record<string, unknown>).name as string
                 }
-              >
-                <SizePicker />
-              </Suspense>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-3">
-              {defaultVariant && (
-                <AddToCart
-                  productVariantId={
-                    (defaultVariant as Record<string, unknown>).id as string
-                  }
-                  productId={(product as Record<string, unknown>).id as string}
-                  productName={
-                    (product as Record<string, unknown>).name as string
-                  }
-                  productImage={primaryImage || ""}
-                  color={
-                    (
-                      (defaultVariant as Record<string, unknown>)
-                        .color as Record<string, unknown>
-                    ).name as string
-                  }
-                  size={
-                    (
-                      (defaultVariant as Record<string, unknown>)
-                        .size as Record<string, unknown>
-                    ).name as string
-                  }
-                  price={
-                    Number((defaultVariant as Record<string, unknown>).price) ||
-                    minPrice
-                  }
-                  salePrice={
-                    (defaultVariant as Record<string, unknown>).sale_price
-                      ? Number(
-                          (defaultVariant as Record<string, unknown>).sale_price
-                        )
-                      : undefined
-                  }
-                  inStock={
-                    (defaultVariant as Record<string, unknown>)
-                      .in_stock as number
-                  }
-                  className="w-full"
-                />
-              )}
-              <button className="w-full border border-gray-300 text-gray-900 py-3 px-6 rounded-md font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors flex items-center justify-center space-x-2">
-                <Heart className="w-5 h-5" />
-                <span>Favorite</span>
-              </button>
-            </div>
+                productImage={primaryImage || ""}
+              />
+            )}
 
             {/* Collapsible Sections */}
             <div className="space-y-4">

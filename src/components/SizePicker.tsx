@@ -1,43 +1,29 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
+
+export interface SizeOption {
+  id: string;
+  name: string;
+  available: boolean;
+}
 
 interface SizePickerProps {
-  sizes?: string[];
-  onSizeSelect?: (size: string) => void;
+  sizes: SizeOption[];
+  selectedSizeId?: string | null;
+  onSizeSelect?: (size: SizeOption) => void;
 }
 
 export default function SizePicker({
-  sizes = [
-    "5",
-    "5.5",
-    "6",
-    "6.5",
-    "7",
-    "7.5",
-    "8",
-    "8.5",
-    "9",
-    "9.5",
-    "10",
-    "10.5",
-    "11",
-    "11.5",
-    "12",
-  ],
+  sizes,
+  selectedSizeId = null,
   onSizeSelect,
 }: SizePickerProps) {
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
+  const focusIndexRef = useRef<number>(-1);
   const sizeRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  // Available sizes (first 10 are available, rest are disabled)
-  const availableSizes = sizes.slice(0, 10);
-  const unavailableSizes = sizes.slice(10);
-
-  const handleSizeSelect = (size: string) => {
-    if (availableSizes.includes(size)) {
-      setSelectedSize(size);
+  const handleSizeSelect = (size: SizeOption) => {
+    if (size.available) {
       onSizeSelect?.(size);
     }
   };
@@ -45,72 +31,82 @@ export default function SizePicker({
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
     switch (e.key) {
-      case "ArrowRight":
+      case "ArrowRight": {
         e.preventDefault();
-        const nextIndex = Math.min(index + 1, availableSizes.length - 1);
-        setFocusedIndex(nextIndex);
+        const nextIndex = Math.min(index + 1, sizes.length - 1);
+        focusIndexRef.current = nextIndex;
         sizeRefs.current[nextIndex]?.focus();
         break;
-      case "ArrowLeft":
+      }
+      case "ArrowLeft": {
         e.preventDefault();
         const prevIndex = Math.max(index - 1, 0);
-        setFocusedIndex(prevIndex);
+        focusIndexRef.current = prevIndex;
         sizeRefs.current[prevIndex]?.focus();
         break;
+      }
       case "Enter":
       case " ":
         e.preventDefault();
-        handleSizeSelect(availableSizes[index]);
+        handleSizeSelect(sizes[index]);
         break;
     }
   };
 
-  // Focus management
   useEffect(() => {
-    if (focusedIndex >= 0 && sizeRefs.current[focusedIndex]) {
-      sizeRefs.current[focusedIndex]?.focus();
+    if (
+      focusIndexRef.current >= 0 &&
+      sizeRefs.current[focusIndexRef.current]
+    ) {
+      sizeRefs.current[focusIndexRef.current]?.focus();
     }
-  }, [focusedIndex]);
+  }, []);
 
   return (
     <div className="grid grid-cols-5 gap-2">
-      {/* Available Sizes */}
-      {availableSizes.map((size, index) => (
-        <button
-          key={size}
-          ref={(el) => {
-            sizeRefs.current[index] = el;
-          }}
-          onClick={() => handleSizeSelect(size)}
-          onKeyDown={(e) => handleKeyDown(e, index)}
-          onFocus={() => setFocusedIndex(index)}
-          className={`
-            h-10 px-3 text-sm font-medium rounded-md border transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2
-            ${
-              selectedSize === size
-                ? "bg-black text-white border-black"
-                : "bg-white text-gray-900 border-gray-300 hover:border-gray-400"
-            }
-          `}
-          aria-pressed={selectedSize === size}
-          aria-label={`Size ${size}`}
-        >
-          {size}
-        </button>
-      ))}
+      {sizes.map((size, index) => {
+        const isSelected = selectedSizeId === size.id;
 
-      {/* Unavailable Sizes */}
-      {unavailableSizes.map((size) => (
-        <button
-          key={size}
-          disabled
-          className="h-10 px-3 text-sm font-medium rounded-md border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
-          aria-label={`Size ${size} - Not available`}
-        >
-          {size}
-        </button>
-      ))}
+        if (!size.available) {
+          return (
+            <button
+              key={size.id}
+              disabled
+              className="h-10 px-3 text-sm font-medium rounded-md border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+              aria-label={`Size ${size.name} - Not available`}
+            >
+              {size.name}
+            </button>
+          );
+        }
+
+        return (
+          <button
+            key={size.id}
+            ref={(el) => {
+              sizeRefs.current[index] = el;
+            }}
+            onClick={() => handleSizeSelect(size)}
+            onKeyDown={(e) => handleKeyDown(e, index)}
+            onFocus={() => {
+              focusIndexRef.current = index;
+            }}
+            className={`
+              h-10 px-3 text-sm font-medium rounded-md border transition-all duration-200
+              focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2
+              ${
+                isSelected
+                  ? "bg-black text-white border-black"
+                  : "bg-white text-gray-900 border-gray-300 hover:border-gray-400"
+              }
+            `}
+            aria-pressed={isSelected}
+            aria-label={`Size ${size.name}`}
+          >
+            {size.name}
+          </button>
+        );
+      })}
     </div>
   );
 }
