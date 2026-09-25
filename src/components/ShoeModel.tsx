@@ -32,7 +32,7 @@ interface ShoeModelProps {
 export default function ShoeModel({ motion, size: sizeProp }: ShoeModelProps) {
   const spinRef = useRef<THREE.Group>(null);
   const isMobile = useThree((state) => state.size.width < 640);
-  const size = sizeProp ?? (isMobile ? 3.0 : 4.2);
+  const size = sizeProp ?? (isMobile ? 3.0 : 3.6);
   const { scene } = useGLTF(MODEL_URL);
 
   const scale = useMemo(() => {
