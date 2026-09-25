@@ -39,6 +39,10 @@ export default function Filters({ initialFilters }: FiltersProps) {
 
     Object.entries(newFilters).forEach(([key, value]) => {
       if (key === "sort" || key === "page" || key === "limit") return;
+      if (key === "search" && typeof value === "string" && value) {
+        params.set("search", value);
+        return;
+      }
       if (Array.isArray(value) && value.length > 0) {
         value.forEach((v) => params.append(key, v));
       }

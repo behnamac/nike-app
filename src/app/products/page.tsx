@@ -95,6 +95,11 @@ export default async function ProductsPage({
             {activeFilterCount > 0 && (
               <div className="mb-6">
                 <div className="flex flex-wrap gap-2">
+                  {filters.search && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-800">
+                      Search: {filters.search}
+                    </span>
+                  )}
                   {sidebarFilters.gender?.map((genderSlug) => (
                     <span
                       key={genderSlug}

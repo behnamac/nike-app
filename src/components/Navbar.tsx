@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FaUser, FaSignOutAlt } from "react-icons/fa";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import CartIcon from "./CartIcon";
 
@@ -17,8 +18,11 @@ const NAV_LINKS = [
 ];
 
 export default function Navbar() {
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { user, loading, signOut: authSignOut } = useAuth();
 
   // Transparent over the hero, frosted once the page scrolls
@@ -33,7 +37,24 @@ export default function Navbar() {
     await authSignOut();
   };
 
-  const solid = scrolled || isMobileMenuOpen;
+  const closeSearch = () => {
+    setIsSearchOpen(false);
+    setSearchQuery("");
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = searchQuery.trim();
+    if (trimmed) {
+      const params = new URLSearchParams({ search: trimmed });
+      router.push(`/products?${params.toString()}`, { scroll: false });
+    } else {
+      router.push("/products", { scroll: false });
+    }
+    closeSearch();
+  };
+
+  const solid = scrolled || isMobileMenuOpen || isSearchOpen;
 
   return (
     <nav
@@ -69,13 +90,19 @@ export default function Navbar() {
 
         {/* Right Section */}
         <div className="flex items-center gap-1">
-          <Link
-            href="/products"
-            aria-label="Search products"
+          <button
+            type="button"
+            onClick={() => setIsSearchOpen((open) => !open)}
+            aria-expanded={isSearchOpen}
+            aria-label={isSearchOpen ? "Close search" : "Search products"}
             className="w-11 h-11 rounded-full flex items-center justify-center text-dark-900 hover:bg-light-200 transition-colors"
           >
-            <Search className="w-5 h-5" />
-          </Link>
+            {isSearchOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Search className="w-5 h-5" />
+            )}
+          </button>
           <CartIcon />
 
           <div className="hidden md:flex items-center ml-2">
@@ -126,6 +153,38 @@ export default function Navbar() {
           </button>
         </div>
       </div>
+
+      {/* Search Bar */}
+      {isSearchOpen && (
+        <div className="border-t border-light-300 bg-white px-4 sm:px-8 py-3">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="max-w-[1280px] mx-auto flex items-center gap-3"
+          >
+            <Search className="w-4 h-4 text-dark-500 flex-shrink-0" />
+            <input
+              autoFocus
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") closeSearch();
+              }}
+              placeholder="Search for shoes, apparel..."
+              aria-label="Search products"
+              className="flex-1 bg-transparent text-body text-dark-900 placeholder:text-dark-500 outline-none"
+            />
+            <button
+              type="button"
+              onClick={closeSearch}
+              aria-label="Close search"
+              className="text-dark-500 hover:text-dark-900 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
